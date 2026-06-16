@@ -320,14 +320,6 @@
     const list = document.getElementById('comments-list');
     const input = document.getElementById('comment-input');
     const postBtn = document.getElementById('post-comment');
-    const commenterName = document.getElementById('commenter-name');
-
-    commenterName.value = localStorage.getItem('argusAuthor') || '';
-    commenterName.addEventListener('change', () => {
-      const val = commenterName.value.trim();
-      if (val) localStorage.setItem('argusAuthor', val);
-      else localStorage.removeItem('argusAuthor');
-    });
 
     let comments = report.comments || [];
     renderComments();
@@ -336,7 +328,7 @@
       const text = input.value.trim();
       if (!text) return;
 
-      const author = commenterName.value.trim();
+      const author = localStorage.getItem('argusAuthor') || '';
       postBtn.disabled = true;
       try {
         const res = await fetch(`/api/reports/${id}/comments`, {
