@@ -6,10 +6,24 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
+    <div id="name-prompt" class="name-prompt hidden">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <h1>Argus</h1>
+      </div>
+      <p class="name-prompt-text">Before you start, what's your name? It'll appear on bug reports and comments.</p>
+      <input id="name-input" type="text" placeholder="e.g. Sarah, QA Lead…" maxlength="40" />
+      <button id="name-save-btn" class="btn-primary name-save-btn" disabled>Get Started</button>
+    </div>
+
     <header>
       <div class="brand">
         <span class="brand-mark"></span>
         <h1>Argus</h1>
+      </div>
+      <div class="user-badge" id="user-badge">
+        <span id="user-name-display"></span>
+        <button id="edit-name-btn" class="edit-name-btn" title="Change name">✏️</button>
       </div>
       <p class="page-url" id="page-url">—</p>
     </header>

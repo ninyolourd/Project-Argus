@@ -10,6 +10,12 @@ const els = {
   draftsLink: document.getElementById('drafts-link'),
   libraryLink: document.getElementById('library-link'),
   serverUrl: document.getElementById('server-url'),
+  namePrompt: document.getElementById('name-prompt'),
+  nameInput: document.getElementById('name-input'),
+  nameSaveBtn: document.getElementById('name-save-btn'),
+  userBadge: document.getElementById('user-badge'),
+  userNameDisplay: document.getElementById('user-name-display'),
+  editNameBtn: document.getElementById('edit-name-btn'),
 };
 
 const state = {
@@ -26,6 +32,7 @@ async function init() {
   state.tab = tab;
   els.pageUrl.textContent = tab.url || '';
 
+  await loadUserName();
   await refreshLogCounts();
   await loadServerUrl();
   await restoreRecordingState();
@@ -36,6 +43,37 @@ async function init() {
   els.draftsLink.addEventListener('click', onOpenDrafts);
   els.libraryLink.addEventListener('click', onOpenLibrary);
   els.serverUrl.addEventListener('change', saveServerUrl);
+
+  els.nameInput.addEventListener('input', () => {
+    els.nameSaveBtn.disabled = !els.nameInput.value.trim();
+  });
+  els.nameSaveBtn.addEventListener('click', saveUserName);
+  els.nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && els.nameInput.value.trim()) saveUserName();
+  });
+  els.editNameBtn.addEventListener('click', () => {
+    els.nameInput.value = els.userNameDisplay.textContent;
+    els.nameSaveBtn.disabled = false;
+    els.namePrompt.classList.remove('hidden');
+  });
+}
+
+async function loadUserName() {
+  const { argusUserName } = await chrome.storage.local.get('argusUserName');
+  if (!argusUserName) {
+    els.namePrompt.classList.remove('hidden');
+    setTimeout(() => els.nameInput.focus(), 50);
+  } else {
+    els.userNameDisplay.textContent = argusUserName;
+  }
+}
+
+async function saveUserName() {
+  const name = els.nameInput.value.trim();
+  if (!name) return;
+  await chrome.storage.local.set({ argusUserName: name });
+  els.userNameDisplay.textContent = name;
+  els.namePrompt.classList.add('hidden');
 }
 
 function setMode(mode) {
