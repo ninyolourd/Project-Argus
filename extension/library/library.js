@@ -60,9 +60,13 @@ function renderRow(entry) {
 
   const openLink = document.createElement('a');
   openLink.className = 'btn-primary';
-  openLink.href = entry.url;
   openLink.target = '_blank';
   openLink.textContent = 'Open';
+  chrome.storage.local.get('argusUserName').then(({ argusUserName }) => {
+    openLink.href = argusUserName
+      ? `${entry.url}?author=${encodeURIComponent(argusUserName)}`
+      : entry.url;
+  });
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'btn-secondary';
