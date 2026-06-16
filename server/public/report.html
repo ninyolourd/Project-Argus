@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Argus Report</title>
+    <link rel="stylesheet" href="/report.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span class="brand-name">Argus</span>
+        </div>
+        <a id="open-library" href="#" class="library-link">All Argus ↗</a>
+      </div>
+
+      <header>
+        <h1 id="report-name">🐞 Bug Report</h1>
+        <p id="created-at" class="muted"></p>
+      </header>
+
+      <div class="layout">
+        <div class="main">
+          <section class="card">
+            <h2>Capture</h2>
+            <div id="capture-container"></div>
+          </section>
+
+          <section class="card">
+            <h2>Description</h2>
+            <textarea id="description-input" class="text-field" placeholder="Add a description for this report…"></textarea>
+            <div class="field-actions">
+              <button id="save-description" class="btn-primary">Save</button>
+              <span id="description-status" class="field-status"></span>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Comments</h2>
+            <div id="comments-list" class="comments-list"></div>
+            <textarea id="comment-input" class="text-field" placeholder="Add a comment…"></textarea>
+            <div class="field-actions">
+              <button id="post-comment" class="btn-primary">Post Comment</button>
+            </div>
+          </section>
+        </div>
+
+        <aside class="sidebar card">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="environment">Environment</button>
+            <button class="tab-btn" data-tab="console">Console Logs (<span id="console-count">0</span>)</button>
+            <button class="tab-btn" data-tab="network">Network Logs (<span id="network-count">0</span>)</button>
+          </div>
+
+          <div class="tab-panel active" data-tab="environment">
+            <table id="metadata-table" class="kv-table"></table>
+          </div>
+
+          <div class="tab-panel" data-tab="console">
+            <div class="table-wrap">
+              <table id="console-table">
+                <thead>
+                  <tr>
+                    <th>Level</th>
+                    <th>Message</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-tab="network">
+            <div class="network-toolbar">
+              <div class="search-field">
+                <span class="search-icon">⌕</span>
+                <input type="text" id="network-search" placeholder="Filter" />
+              </div>
+              <label class="checkbox-field">
+                <input type="checkbox" id="network-errors-only" />
+                <span>Errors only</span>
+              </label>
+            </div>
+            <div class="filter-pills">
+              <button class="filter-pill active" data-type="all">All</button>
+              <button class="filter-pill" data-type="fetch">Fetch/XHR</button>
+              <button class="filter-pill" data-type="ws">WS</button>
+              <button class="filter-pill" data-type="js">JS</button>
+              <button class="filter-pill" data-type="css">CSS</button>
+              <button class="filter-pill" data-type="media">Media</button>
+              <button class="filter-pill" data-type="font">Font</button>
+              <button class="filter-pill" data-type="doc">Doc</button>
+              <button class="filter-pill" data-type="other">Other</button>
+            </div>
+            <div class="table-wrap">
+              <table id="network-table">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>URL</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Duration (ms)</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden">Link copied to clipboard!</div>
+
+    <div id="network-detail-overlay" class="detail-overlay hidden">
+      <div class="detail-modal">
+        <div class="detail-modal-header">
+          <h3 id="detail-title"></h3>
+          <button id="detail-close" class="detail-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="tabs">
+          <button class="detail-tab-btn active" data-detail-tab="general">General</button>
+          <button class="detail-tab-btn" data-detail-tab="request-headers">Request Headers</button>
+          <button class="detail-tab-btn" data-detail-tab="response-headers">Response Headers</button>
+          <button class="detail-tab-btn" data-detail-tab="payload">Payload</button>
+          <button class="detail-tab-btn" data-detail-tab="response">Response</button>
+        </div>
+        <div class="detail-tab-panel active" data-detail-tab="general">
+          <table id="detail-general" class="kv-table"></table>
+        </div>
+        <div class="detail-tab-panel" data-detail-tab="request-headers">
+          <table id="detail-request-headers" class="kv-table"></table>
+        </div>
+        <div class="detail-tab-panel" data-detail-tab="response-headers">
+          <table id="detail-response-headers" class="kv-table"></table>
+        </div>
+        <div class="detail-tab-panel" data-detail-tab="payload">
+          <pre id="detail-payload" class="detail-payload"></pre>
+        </div>
+        <div class="detail-tab-panel" data-detail-tab="response">
+          <pre id="detail-response" class="detail-payload"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script src="/report.js"></script>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <h1>Argus</h1>
+      </div>
+      <p class="page-url" id="page-url">—</p>
+    </header>
+
+    <section class="mode-toggle">
+      <button class="mode-btn active" data-mode="screenshot">
+        <span class="mode-icon">📷</span>
+        <span>Screenshot</span>
+      </button>
+      <button class="mode-btn" data-mode="recording">
+        <span class="mode-icon">🎥</span>
+        <span>Record Tab</span>
+      </button>
+    </section>
+
+    <section class="source-toggle hidden" id="source-toggle">
+      <button class="source-btn active" data-source="tab">Tab</button>
+      <button class="source-btn" data-source="desktop">Desktop</button>
+    </section>
+
+    <section class="log-counts">
+      <span class="log-count"><span class="log-dot console-dot"></span>Console <strong id="console-count">0</strong></span>
+      <span class="log-count"><span class="log-dot network-dot"></span>Network <strong id="network-count">0</strong></span>
+    </section>
+
+    <section class="capture-area">
+      <button id="action-btn" class="btn-primary action-btn">Select Area to Capture</button>
+      <p class="hint" id="hint">Drag to select the area you want to capture.</p>
+    </section>
+
+    <div class="links">
+      <a id="library-link" class="link-card" href="#">
+        <span class="link-icon">🗂️</span>All Argus
+      </a>
+      <a id="drafts-link" class="link-card" href="#">
+        <span class="link-icon">🎬</span>Drafts &amp; Recordings
+      </a>
+    </div>
+
+    <footer>
+      <label for="server-url" class="field-label">Server URL</label>
+      <input id="server-url" type="text" value="http://localhost:4000" />
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
