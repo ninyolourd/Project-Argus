@@ -92,7 +92,7 @@ router.post('/reports/:id/comments', async (req, res) => {
 router.delete('/reports/:id', async (req, res) => {
   try {
     const meta = await getReportMeta(req.params.id);
-    if (!meta) return res.status(404).json({ error: 'Report not found' });
+    if (!meta) return res.json({ ok: true });
     await deleteReport(req.params.id);
     res.json({ ok: true });
   } catch (err) {
