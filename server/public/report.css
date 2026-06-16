@@ -474,6 +474,13 @@ tr.status-error td {
   background: var(--color-surface);
 }
 
+.text-field:disabled {
+  cursor: default;
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+  resize: none;
+}
+
 .field-actions {
   display: flex;
   align-items: center;

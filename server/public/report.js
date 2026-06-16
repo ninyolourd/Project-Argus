@@ -27,7 +27,10 @@
     localStorage.setItem('argusAuthor', params.get('author'));
     sessionStorage.setItem('argusFromExtension', '1');
   }
-  if (params.get('created') === '1' || params.get('author')) {
+  if (params.get('created') === '1' || params.get('owner') === '1') {
+    sessionStorage.setItem('argusIsOwner', '1');
+  }
+  if (params.get('created') === '1' || params.get('author') || params.get('owner') === '1') {
     history.replaceState(null, '', location.pathname);
   }
 
@@ -290,6 +293,13 @@
     const status = document.getElementById('description-status');
 
     input.value = report.notes || '';
+
+    if (!sessionStorage.getItem('argusIsOwner')) {
+      input.disabled = true;
+      saveBtn.classList.add('hidden');
+      return;
+    }
+
     saveBtn.disabled = true;
 
     input.addEventListener('input', () => {

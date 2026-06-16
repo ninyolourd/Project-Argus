@@ -66,8 +66,8 @@ function renderRow(entry, argusUserName) {
   openLink.target = '_blank';
   openLink.textContent = 'Open';
   openLink.href = argusUserName
-    ? `${entry.url}?author=${encodeURIComponent(argusUserName)}`
-    : entry.url;
+    ? `${entry.url}?author=${encodeURIComponent(argusUserName)}&owner=1`
+    : `${entry.url}?owner=1`;
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'btn-secondary';
