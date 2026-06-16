@@ -320,6 +320,18 @@
     const list = document.getElementById('comments-list');
     const input = document.getElementById('comment-input');
     const postBtn = document.getElementById('post-comment');
+    const commenterRow = document.getElementById('commenter-row');
+    const commenterName = document.getElementById('commenter-name');
+
+    if (localStorage.getItem('argusAuthor')) {
+      commenterRow.classList.add('hidden');
+    } else {
+      commenterName.addEventListener('change', () => {
+        const val = commenterName.value.trim();
+        if (val) localStorage.setItem('argusAuthor', val);
+        else localStorage.removeItem('argusAuthor');
+      });
+    }
 
     let comments = report.comments || [];
     renderComments();
@@ -328,7 +340,7 @@
       const text = input.value.trim();
       if (!text) return;
 
-      const author = localStorage.getItem('argusAuthor') || '';
+      const author = localStorage.getItem('argusAuthor') || commenterName.value.trim();
       postBtn.disabled = true;
       try {
         const res = await fetch(`/api/reports/${id}/comments`, {
