@@ -190,3 +190,61 @@ After Render deployment, updated the extension to point to the live server by de
 - **Delete fix (pre-migration reports)** — reports created before B2 migration had no files in B2. Delete route was returning 404, blocking UI removal. Fixed by returning `{ ok: true }` when report not found in B2, allowing Chrome to clean up local history
 - **Extension zip** — `Argus-Extension.zip` created and added to repo for QA distribution
 - **Standing instruction saved** — `DISCUSSION.md` to be updated and pushed at the end of every future session
+
+---
+
+## Session — 2026-06-16 (Username & Access Control)
+
+### Username feature — completed (Part 2)
+
+The first session established the name prompt in the extension popup (`argusUserName` in `chrome.storage.local`). This session wired that name into the report page comment system:
+
+**Files changed:**
+- `extension/background.js` — appends `?created=1&author=<name>` when opening a new report tab
+- `server/public/report.html` — added `commenter-row` div (label + name input above comment textarea)
+- `server/public/report.js` — reads `?author=` param on load, saves to `localStorage('argusAuthor')`, includes `author` in comment POST body, renders author next to timestamp in each comment
+- `server/public/report.css` — added `.commenter-row`, `.comment-meta`, `.comment-author` styles
+- `server/src/routes/reports.js` — comment POST now reads `req.body.author`, stores as `comment.author` (null if empty)
+
+### "Commenting as" field behavior
+
+After iterating on several approaches:
+- **Extension users** (opened via library or new report submission): field is **disabled and pre-filled** with their name. They can see it but can't change it on the report page.
+- **Non-extension visitors** (shared link): field is **editable** — they type their name before commenting.
+
+**How it works:**
+- `?author=<name>` sets `sessionStorage('argusFromExtension')` when the page loads. `setupComments()` checks this flag: if set → disable the input; if not → leave editable and pre-fill from `localStorage('argusAuthor')` if available.
+- `sessionStorage` was chosen over `localStorage` because it's scoped to the tab session (survives refresh, clears on tab close), making it a reliable signal for "this tab was opened from the extension."
+
+### Library fix — synchronous href
+
+The library's "Open" button was setting `openLink.href` inside an async `chrome.storage.local.get().then(...)`. If clicked before the promise resolved, the URL would have no `?author=` param. Fixed by loading `argusUserName` once at the top of `init()` alongside `GET_REPORT_HISTORY` via `Promise.all`, then passing it synchronously to `renderRow()`.
+
+Also added `?owner=1` to all library-opened report URLs (see below).
+
+### Description field — owner-only editing
+
+**Decision:** The description textarea should only be editable by the report's author. Other visitors (shared link, other extension users) see it as read-only.
+
+**How it works:**
+- `?created=1` (new report submission) or `?owner=1` (opened from library) sets `sessionStorage('argusIsOwner')`.
+- `setupDescription()` checks this flag: if not set → textarea is `disabled`, Save button is hidden. If set → normal editable behaviour.
+- All reports in the library belong to the current user, so `?owner=1` is always appended by `library.js`.
+
+### GitHub repo visibility
+
+Multiple attempts were made to keep the repo private while allowing Render to deploy:
+- GitHub App method failed — Project-Argus repo wasn't appearing in Render's list under the ninyolourd account.
+- PAT embedded in URL — entered on Render's Public Git Repository tab, but Render still referenced the repo via GitHub API repo ID (not PAT URL), causing deploy hook failures.
+- **Final decision:** Repo kept **public**. Sensitive data (B2 credentials) is in `server/.env` which is gitignored and only set as environment variables in Render. The code itself contains no secrets.
+
+### Commits this session
+- `feat: wire username into report page comments`
+- `chore: update extension zip`
+- `refactor: remove commenter name input, use extension name silently` (reverted direction)
+- `feat: show commenter field only for non-extension visitors`
+- `fix: pass author param when opening reports from library`
+- `fix: load username synchronously before rendering library rows`
+- `fix: use sessionStorage to reliably hide commenter field for extension users`
+- `feat: disable commenter name field for extension users, editable for guests`
+- `feat: description is editable for report owner only, read-only for others`
