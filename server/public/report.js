@@ -19,8 +19,14 @@
     window.postMessage({ source: 'argus-report', type: 'OPEN_LIBRARY' }, '*');
   });
 
-  if (new URLSearchParams(location.search).get('created') === '1') {
+  const params = new URLSearchParams(location.search);
+  if (params.get('created') === '1') {
     showToast('Link copied to clipboard!');
+  }
+  if (params.get('author')) {
+    localStorage.setItem('argusAuthor', params.get('author'));
+  }
+  if (params.get('created') === '1' || params.get('author')) {
     history.replaceState(null, '', location.pathname);
   }
 
@@ -314,6 +320,14 @@
     const list = document.getElementById('comments-list');
     const input = document.getElementById('comment-input');
     const postBtn = document.getElementById('post-comment');
+    const commenterName = document.getElementById('commenter-name');
+
+    commenterName.value = localStorage.getItem('argusAuthor') || '';
+    commenterName.addEventListener('change', () => {
+      const val = commenterName.value.trim();
+      if (val) localStorage.setItem('argusAuthor', val);
+      else localStorage.removeItem('argusAuthor');
+    });
 
     let comments = report.comments || [];
     renderComments();
@@ -322,12 +336,13 @@
       const text = input.value.trim();
       if (!text) return;
 
+      const author = commenterName.value.trim();
       postBtn.disabled = true;
       try {
         const res = await fetch(`/api/reports/${id}/comments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, author }),
         });
         if (!res.ok) throw new Error('Post failed');
         const updated = await res.json();
@@ -347,7 +362,10 @@
           (comment) => `
         <div class="comment">
           <p>${escapeHtml(comment.text)}</p>
-          <time>${new Date(comment.createdAt).toLocaleString()}</time>
+          <div class="comment-meta">
+            ${comment.author ? `<span class="comment-author">${escapeHtml(comment.author)}</span> · ` : ''}
+            <time>${new Date(comment.createdAt).toLocaleString()}</time>
+          </div>
         </div>`
         )
         .join('');

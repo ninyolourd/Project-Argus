@@ -547,7 +547,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             createdAt: new Date().toISOString(),
           });
 
-          chrome.tabs.create({ url: `${fullUrl}?created=1` });
+          const { argusUserName } = await chrome.storage.local.get('argusUserName');
+          const authorParam = argusUserName ? `&author=${encodeURIComponent(argusUserName)}` : '';
+          chrome.tabs.create({ url: `${fullUrl}?created=1${authorParam}` });
           sendResponse({ ok: true, url: fullUrl });
         } catch (err) {
           sendResponse({ ok: false, error: err.message });

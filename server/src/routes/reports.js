@@ -79,7 +79,8 @@ router.post('/reports/:id/comments', async (req, res) => {
     const text = (req.body.text || '').trim();
     if (!text) return res.status(400).json({ error: 'Comment text is required' });
 
-    const comment = { text, createdAt: new Date().toISOString() };
+    const author = (req.body.author || '').trim();
+    const comment = { text, author: author || null, createdAt: new Date().toISOString() };
     const comments = [...(meta.comments || []), comment];
     const updated = await updateReportMeta(req.params.id, { comments });
     res.json(updated);
