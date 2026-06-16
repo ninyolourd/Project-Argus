@@ -324,10 +324,11 @@
     const commenterRow = document.getElementById('commenter-row');
     const commenterName = document.getElementById('commenter-name');
 
+    commenterName.value = localStorage.getItem('argusAuthor') || '';
+
     if (sessionStorage.getItem('argusFromExtension')) {
-      commenterRow.classList.add('hidden');
+      commenterName.disabled = true;
     } else {
-      commenterName.value = localStorage.getItem('argusAuthor') || '';
       commenterName.addEventListener('change', () => {
         const val = commenterName.value.trim();
         if (val) localStorage.setItem('argusAuthor', val);

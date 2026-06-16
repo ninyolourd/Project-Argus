@@ -578,6 +578,13 @@ tr.status-error td {
   background: var(--color-surface);
 }
 
+.commenter-row input:disabled {
+  opacity: 1;
+  cursor: default;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+}
+
 .toast {
   position: fixed;
   top: 24px;
