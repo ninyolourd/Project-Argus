@@ -25,6 +25,7 @@
   }
   if (params.get('author')) {
     localStorage.setItem('argusAuthor', params.get('author'));
+    sessionStorage.setItem('argusFromExtension', '1');
   }
   if (params.get('created') === '1' || params.get('author')) {
     history.replaceState(null, '', location.pathname);
@@ -323,9 +324,10 @@
     const commenterRow = document.getElementById('commenter-row');
     const commenterName = document.getElementById('commenter-name');
 
-    if (localStorage.getItem('argusAuthor')) {
+    if (sessionStorage.getItem('argusFromExtension')) {
       commenterRow.classList.add('hidden');
     } else {
+      commenterName.value = localStorage.getItem('argusAuthor') || '';
       commenterName.addEventListener('change', () => {
         const val = commenterName.value.trim();
         if (val) localStorage.setItem('argusAuthor', val);
