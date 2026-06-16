@@ -175,3 +175,18 @@ After Render deployment, updated the extension to point to the live server by de
 
 - **Project rename** — still deciding on a Greek mythology name. Candidates (gods only): Hermes, Iris, Mnemosyne, Helios, Pheme, Apollo, Hephaestus. Current name "Argus" remains.
 - **60-day auto-cleanup** — discussed but superseded by "Keep only last version" lifecycle setting. Can revisit with B2 custom lifecycle rules if needed.
+
+---
+
+## Session — 2026-06-16 (Continued)
+
+### Additional setup completed this session
+
+- **Project documents** — created `TRACKER.md`, `Argus-Project-Tracker.docx`, `Argus-Project-Overview.pptx` (11 slides), `QA-GUIDE.md`, `DISCUSSION.md`
+- **GitHub repo** — initialized git, created private repo `ninyolourd/Project-Argus`, pushed all files. Made public temporarily to connect Render (repo visibility issues with GitHub App), then set back to private after deployment
+- **Render deployment** — server deployed at `https://project-argus-brw6.onrender.com`. Connected via public Git URL (not GitHub App). Auto-deploy via deploy hook: `curl -X POST "https://api.render.com/deploy/srv-d8obkmbsq97s73fehfjg?key=PayY1lWXssk"`
+- **B2 App Key rotation** — old `Argus-App-Key` (keyID ending `...0001`) replaced with `Argus-App-Key-v2` (keyID ending `...0002`) after original key was shared in chat. New credentials updated in `server/.env` and Render environment variables
+- **B2 lifecycle fix** — bucket was set to "Keep prior versions for 60 days" which caused deletes to not remove files. Changed to "Keep only the last version" — deletes are now permanent and immediate
+- **Delete fix (pre-migration reports)** — reports created before B2 migration had no files in B2. Delete route was returning 404, blocking UI removal. Fixed by returning `{ ok: true }` when report not found in B2, allowing Chrome to clean up local history
+- **Extension zip** — `Argus-Extension.zip` created and added to repo for QA distribution
+- **Standing instruction saved** — `DISCUSSION.md` to be updated and pushed at the end of every future session
