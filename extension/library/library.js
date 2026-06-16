@@ -4,7 +4,10 @@ const emptyEl = document.getElementById('empty');
 init();
 
 async function init() {
-  const history = await chrome.runtime.sendMessage({ type: 'GET_REPORT_HISTORY' });
+  const [history, { argusUserName }] = await Promise.all([
+    chrome.runtime.sendMessage({ type: 'GET_REPORT_HISTORY' }),
+    chrome.storage.local.get('argusUserName'),
+  ]);
 
   if (!history || history.length === 0) {
     emptyEl.textContent = 'No reports yet. Reports you create will show up here.';
@@ -12,10 +15,10 @@ async function init() {
   }
 
   emptyEl.remove();
-  history.forEach((entry) => listEl.appendChild(renderRow(entry)));
+  history.forEach((entry) => listEl.appendChild(renderRow(entry, argusUserName)));
 }
 
-function renderRow(entry) {
+function renderRow(entry, argusUserName) {
   const row = document.createElement('div');
   row.className = 'row';
 
@@ -62,11 +65,9 @@ function renderRow(entry) {
   openLink.className = 'btn-primary';
   openLink.target = '_blank';
   openLink.textContent = 'Open';
-  chrome.storage.local.get('argusUserName').then(({ argusUserName }) => {
-    openLink.href = argusUserName
-      ? `${entry.url}?author=${encodeURIComponent(argusUserName)}`
-      : entry.url;
-  });
+  openLink.href = argusUserName
+    ? `${entry.url}?author=${encodeURIComponent(argusUserName)}`
+    : entry.url;
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'btn-secondary';
