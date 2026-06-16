@@ -439,7 +439,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       (async () => {
         try {
           const { serverUrl } = await chrome.storage.local.get('serverUrl');
-          const base = (serverUrl || 'http://localhost:4000').replace(/\/+$/, '');
+          const base = (serverUrl || 'https://project-argus-brw6.onrender.com').replace(/\/+$/, '');
 
           const res = await fetch(`${base}/api/reports/${msg.id}`, {
             method: 'PATCH',
@@ -465,7 +465,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       (async () => {
         try {
           const { serverUrl } = await chrome.storage.local.get('serverUrl');
-          const base = (serverUrl || 'http://localhost:4000').replace(/\/+$/, '');
+          const base = (serverUrl || 'https://project-argus-brw6.onrender.com').replace(/\/+$/, '');
 
           const res = await fetch(`${base}/api/reports/${msg.id}`, { method: 'DELETE' });
           if (!res.ok) throw new Error(`Server responded with ${res.status}`);
@@ -510,7 +510,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           }
 
           const { serverUrl } = await chrome.storage.local.get('serverUrl');
-          const base = (serverUrl || 'http://localhost:4000').replace(/\/+$/, '');
+          const base = (serverUrl || 'https://project-argus-brw6.onrender.com').replace(/\/+$/, '');
 
           const formData = new FormData();
           formData.append('name', msg.name || '');
