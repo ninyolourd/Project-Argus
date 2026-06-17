@@ -248,3 +248,25 @@ Multiple attempts were made to keep the repo private while allowing Render to de
 - `fix: use sessionStorage to reliably hide commenter field for extension users`
 - `feat: disable commenter name field for extension users, editable for guests`
 - `feat: description is editable for report owner only, read-only for others`
+
+---
+
+## Session — 2026-06-17 (Desktop Recording Bug Fixes)
+
+### Bug 1 — Preview modal not showing after desktop recording
+
+**Root cause:** When the user switches tabs (e.g., to the library or another web page) during recording, `DESKTOP_RECORDING_READY` is sent to the ORIGINAL recording tab (correct), but the user is now looking at a different tab and doesn't see the modal.
+
+**Fix (commit `3274619`):** Added `.then()` to the `chrome.tabs.sendMessage` call. On success (original tab is a regular web page and received the message), focus/activate that tab so the modal is immediately visible. The `.catch()` fallback (for when the original tab is an extension page where content scripts don't run) was already in place from the previous session.
+
+```js
+chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY', recordingTabId: tabId })
+  .then(() => {
+    chrome.tabs.update(tabId, { active: true }).catch(() => {});
+  })
+  .catch(async () => { /* fallback to most recently active http/https tab */ });
+```
+
+### Commits this session
+- `fix: find most recently active web tab for desktop recording fallback` (21c249d — from previous session)
+- `fix: focus original tab so preview modal is visible after desktop recording` (3274619)
