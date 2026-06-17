@@ -17,60 +17,100 @@ Planned features and ideas beyond the current core (Chrome extension + Node/Expr
 
 ---
 
-## Phase 1 — Olympus Integration (Web SDK)
+## Phase 1 — Accounts
 
-> Goal: Add Argus as an app tile in Olympus so users can capture bugs without installing the Chrome extension.
+> Without user accounts, projects have no owner and captures can't be scoped. Everything else builds on this.
 
-### Argus Web SDK (`argus.js`)
+### What to build
 
-A single script tag that any web app (starting with Olympus) can embed to get full Argus functionality in-browser — no extension required.
+- **Sign up / log in** — email + password or SSO (Olympus session)
+- **User profiles** — name, email, role (reporter / admin)
+- **Session tokens** — replace the current stateless approach; auth token sent with every report submission
+- **Extension auth** — the extension popup gets a "Sign in" step; token stored in `chrome.storage.local`
+- **Server auth middleware** — protect report creation and deletion endpoints
+
+### Impact on existing features
+
+- `argusUserName` in the extension is replaced by the logged-in user's display name
+- The "Commenting as" field is auto-filled from the account and fully disabled
+- Report ownership is tied to the account, not just the `?owner=1` URL param
+
+---
+
+## Phase 2 — Projects & Folders
+
+> Organise captures by project so teams can separate bugs by app or client.
+
+### Data model
+
+```
+User (account)
+└── Projects  (Athena, Olympus Core, Client X…)
+    └── Bug Captures  (screenshots, recordings)
+```
+
+### What to build
+
+- **Project CRUD** — create, rename, delete projects
+- **Assign on capture** — extension popup shows a project dropdown before submitting; default to last-used project
+- **Project library** — the library page filters by project; switch projects via a sidebar or tab
+- **Auto-tagging via SDK** — when `argus.js` is embedded in an app (e.g. Athena), it passes a `projectId` config so captures are automatically filed under the right project
+- **Shared projects** — invite teammates to a project so everyone sees the same captures
+
+---
+
+## Phase 3 — Web SDK & Olympus Integration
+
+> Add Argus to Olympus as an app tile, and embed it inside Athena — no Chrome extension required.
+
+### `argus.js` SDK
+
+A single script tag any web app embeds to get full Argus functionality:
 
 ```html
-<script src="https://project-argus-brw6.onrender.com/sdk/argus.js"></script>
+<script src="https://project-argus-brw6.onrender.com/sdk/argus.js"
+        data-project="athena">
+</script>
 ```
 
 **What it provides:**
-- Floating trigger button (or programmatic launch)
+- Floating capture button (or programmatic trigger)
 - Screenshot via `html2canvas`
 - Screen recording via `getDisplayMedia` (same API the extension uses)
 - Console log capture via `console` monkey-patching
 - Network log capture via `fetch` / `XHR` interception
 - Same "New Bug Capture" modal UI (`overlay.js` reused)
-- Submits to the same server and produces the same shareable report link
+- Submits to the same server, produces the same shareable report link
+- Auto-identifies user from the Olympus session (no manual name entry)
+- `data-project` attribute auto-files captures under the correct project
 
 **Differences from extension:**
 - Screenshots use `html2canvas` — less accurate on cross-origin iframes
-- No tab-level isolation (captures the full page, not a cropped selection per tab)
-- Website owner must embed the script (doesn't auto-run on every site like the extension)
+- Website owner must embed the script (doesn't auto-run on every site)
 
-**Olympus-specific integration:**
-- Argus appears as an app card in the Olympus dashboard (alongside Athena)
-- SDK auto-identifies the user from the Olympus session (no manual name entry)
-- Report links can surface inside Olympus (e.g., in a "Bug Reports" section)
+### Olympus integration
 
----
-
-## Phase 2 — Quality of Life
-
-- **Search & filter in library** — search by name, filter by date or capture type
-- **Bulk delete** — select multiple reports and delete at once
-- **Report status tags** — mark a report as Open / In Progress / Resolved
-- **Expiry control** — optional auto-delete after N days per report
-- **Capture annotations** — draw arrows or highlight areas on a screenshot before submitting
+- Argus appears as an app tile in the Olympus dashboard (alongside Athena)
+- Athena embeds `argus.js` with `data-project="athena"` — capture button lives inside Athena's UI
+- Standalone Argus app in Olympus shows all captures across all projects in one place
+- Both entry points share the same server and reports
 
 ---
 
-## Phase 3 — Collaboration
+## Phase 4 — Collaboration & Workflow
 
+- **Status tags** — mark a report as Open / In Progress / Resolved
 - **Assignee field** — assign a report to a team member
 - **@mentions in comments** — notify teammates via email or Slack
 - **Slack / Jira integration** — post report links automatically on submit
-- **Team library** — shared view of all reports across the team (not per-user)
+- **Capture annotations** — draw arrows or highlight areas on a screenshot before submitting
+- **Bulk actions** — select multiple reports to delete, move, or change status
 
 ---
 
 ## Notes
 
-- Greek mythology naming convention in Olympus: Athena, Argus, and others follow the same pattern
-- Argus server is on Render free tier — upgrade if traffic grows
+- Greek mythology naming convention in Olympus: Athena, Argus — keep the pattern for any new tools
+- Argus server is on Render free tier — upgrade if team traffic grows
 - B2 free tier: 10 GB storage, no egress fees
+- Accounts (Phase 1) unlocks everything else — start there
