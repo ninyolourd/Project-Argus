@@ -44,5 +44,5 @@ Anyone on the team can open these links — no login required.
 ## Notes
 
 - The first time someone opens a report link after a period of inactivity, the server may take **30–60 seconds to wake up** (Render free tier). After that it's fast.
-- Captures are stored in the cloud and **auto-deleted after 60 days**.
+- Captures are stored in the cloud **indefinitely** — they are only removed when you manually delete them from the All Argus library.
 - Screenshots and recordings are kept private — links are only shared when you copy and send them.
