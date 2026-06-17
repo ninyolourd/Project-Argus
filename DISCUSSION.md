@@ -270,3 +270,14 @@ chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY', recordingTabId
 ### Commits this session
 - `fix: find most recently active web tab for desktop recording fallback` (21c249d — from previous session)
 - `fix: focus original tab so preview modal is visible after desktop recording` (3274619)
+- `fix: inject content scripts before sending DESKTOP_RECORDING_READY` (8412d8d)
+
+### Root cause of the persistent drafts redirect
+
+Tabs opened before the extension is installed or reloaded never receive the manifest-declared content scripts. `chrome.tabs.sendMessage` fails silently on those tabs, causing the fallback to open the drafts page.
+
+**Fix:** Before sending `DESKTOP_RECORDING_READY` to any tab, use `chrome.scripting.executeScript` to inject `overlay.js` + `content.js` if they aren't already present. Guards were added to both scripts to make re-injection safe:
+- `overlay.js`: `window.ArgusOverlay = window.ArgusOverlay || (() => { ... })()`
+- `content.js`: early return if `window.__argusContentLoaded` is already set
+
+This covers all scenarios: user starts from a web page, switches tabs during recording, or starts from an extension page (library/drafts).
