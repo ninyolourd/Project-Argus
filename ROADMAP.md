@@ -17,6 +17,31 @@ Planned features and ideas beyond the current core (Chrome extension + Node/Expr
 
 ---
 
+## Bug Log
+
+> All known issues encountered during development — fixed and open.
+
+### Fixed
+
+| # | Issue | Root Cause | Fix |
+|---|---|---|---|
+| 1 | "Recording not found" error on Drafts page | `SUBMIT_REPORT` used `sender.tab?.id ?? msg.tabId` — when Drafts page sent the message, `sender.tab` was the drafts tab, not the recording's original tab | Swapped priority to `msg.tabId ?? sender.tab?.id` so the explicitly supplied tab ID always wins |
+| 2 | Desktop recording modal never shows when starting from Library/Drafts page | Content scripts can't run on `chrome-extension://` pages, so `DESKTOP_RECORDING_READY` was silently dropped | On send failure, fall back to the most recently active http/https tab; inject `overlay.js` + `content.js` first to handle tabs opened before the extension was installed |
+| 3 | Modal appears on wrong tab after switching tabs during recording | Modal showed on the correct original tab but the user was now looking at a different tab | Added `chrome.tabs.update(tabId, { active: true })` on successful send so Chrome brings the right tab into focus |
+| 4 | Library "Open" link missing `?author=` param if clicked before async resolved | `chrome.storage.local.get` was async; href was set inside `.then()`. Clicking before resolution produced a URL with no author param | Moved username load to `init()` via `Promise.all` alongside report history; href set synchronously in `renderRow()` |
+| 5 | Delete blocked on reports created before B2 migration | Old reports had no files in B2; delete route returned 404, preventing the library UI from removing the entry | Return `{ ok: true }` when the report isn't found in B2 — lets the extension clean up local history regardless |
+| 6 | Double-injection crash risk when injecting content scripts into tabs that already had them | Re-running `overlay.js` would reassign `window.ArgusOverlay`; re-running `content.js` IIFE would register duplicate event listeners | Added guards: `window.ArgusOverlay = window.ArgusOverlay \|\| (...)` in overlay.js; early return if `window.__argusContentLoaded` is set in content.js |
+| 7 | "Commenting as" name not appearing on comments | `author` field was not included in the comment POST body or stored on the server | Added `author` to comment POST, stored in `reports/<id>/meta.json`, and rendered next to timestamp in the report page |
+| 8 | Description editable by anyone who opens the report link | No ownership check on the description textarea | `?created=1` / `?owner=1` sets `sessionStorage('argusIsOwner')`; without it the textarea is disabled and Save is hidden |
+
+### Open / Intermittent
+
+| # | Issue | Workaround | Status |
+|---|---|---|---|
+| 9 | Save prompt sometimes doesn't appear after stopping a desktop recording | Go to Drafts page and save from there | Partially fixed (issues 2 & 3 above) — still occurs in some edge cases; needs more investigation |
+
+---
+
 ## Near-term — Bugs & Improvements
 
 > Issues and enhancements on the current extension before moving to the next phase.
