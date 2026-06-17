@@ -390,9 +390,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         setTimeout(() => detachDebugger(tabId), 1000);
         if (msg.source === 'desktop') {
           chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY', recordingTabId: tabId })
+            .then(() => {
+              // Focus the tab where recording started so the modal is visible.
+              chrome.tabs.update(tabId, { active: true }).catch(() => {});
+            })
             .catch(async () => {
-              // Active tab was an extension page — content script can't run there.
-              // Find the most recently active http/https tab and show the preview there.
+              // Tab is an extension page — content script can't run there.
+              // Fall back to the most recently active http/https tab.
               const tabs = await chrome.tabs.query({}).catch(() => []);
               const webTab = tabs
                 .filter((t) => /^https?:/.test(t.url || ''))
