@@ -389,9 +389,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         setTimeout(() => detachDebugger(tabId), 1000);
         if (msg.source === 'desktop') {
-          chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY' }).catch(() => {
-            chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') });
-          });
+          chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY', recordingTabId: tabId })
+            .catch(async () => {
+              // Active tab was an extension page — content script can't run there.
+              // Find the most recently active http/https tab and show the preview there.
+              const tabs = await chrome.tabs.query({}).catch(() => []);
+              const webTab = tabs
+                .filter((t) => /^https?:/.test(t.url || ''))
+                .sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
+              if (webTab) {
+                await chrome.tabs.update(webTab.id, { active: true }).catch(() => {});
+                chrome.tabs.sendMessage(webTab.id, { type: 'DESKTOP_RECORDING_READY', recordingTabId: tabId })
+                  .catch(() => chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') }));
+              } else {
+                chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') });
+              }
+            });
         }
       })().catch(console.error);
       return false;

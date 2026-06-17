@@ -76,9 +76,9 @@
     });
   }
 
-  async function waitForRecording(attempts = 30) {
+  async function waitForRecording(attempts = 30, tabId = null) {
     for (let i = 0; i < attempts; i++) {
-      const rec = await chrome.runtime.sendMessage({ type: 'GET_RECORDING' });
+      const rec = await chrome.runtime.sendMessage({ type: 'GET_RECORDING', tabId });
       if (rec) return rec;
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
@@ -156,8 +156,8 @@
     showRecordingPreview(rec);
   }
 
-  async function showDesktopRecordingPreview() {
-    const rec = await waitForRecording();
+  async function showDesktopRecordingPreview(recordingTabId = null) {
+    const rec = await waitForRecording(30, recordingTabId);
     if (rec) showRecordingPreview(rec);
   }
 
@@ -184,7 +184,7 @@
       return false;
     }
     if (msg.type === 'DESKTOP_RECORDING_READY') {
-      if (isTopFrame) showDesktopRecordingPreview();
+      if (isTopFrame) showDesktopRecordingPreview(msg.recordingTabId ?? null);
       return false;
     }
     if (msg.type === 'RECORDING_ERROR') {
