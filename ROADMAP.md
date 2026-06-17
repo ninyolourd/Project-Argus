@@ -17,6 +17,22 @@ Planned features and ideas beyond the current core (Chrome extension + Node/Expr
 
 ---
 
+## Tech Stack
+
+| Layer | Technology | Details |
+|---|---|---|
+| **Extension** | JavaScript (Chrome MV3) | Background service worker, content scripts, action popup, offscreen document |
+| **Extension UI** | HTML + CSS | Shared design tokens via `theme.css`; in-page overlay built as a Shadow DOM web component |
+| **Server** | Node.js + Express.js | REST API — report creation, capture streaming, comments, delete |
+| **File Storage** | Backblaze B2 | S3-compatible; SDK: `@aws-sdk/client-s3`. Files stored as `reports/<uuid>/capture.png|webm` + `meta.json`. 10 GB free, no egress fees |
+| **Data format** | JSON (flat files in B2) | No database — each report is a `meta.json` object stored alongside its capture file |
+| **Hosting** | Render (free tier) | Cold start ~30–60 s after 15 min inactivity; deploy via webhook |
+| **Local recording storage** | IndexedDB (`argus-recordings`) | Temporary store for recording blobs in the extension before upload |
+| **Extension persistence** | `chrome.storage.local` | Username, server URL, report history |
+| **Session signals** | `sessionStorage` | Per-tab flags: `argusFromExtension`, `argusIsOwner` |
+
+---
+
 ## Bug Log
 
 > All known issues encountered during development — fixed and open.
@@ -96,15 +112,22 @@ User (Olympus account)
 
 ## Phase 3 — Web SDK & Olympus Integration
 
-> Add Argus to Olympus as an app tile, and embed it inside Athena — no Chrome extension required.
+> Add Argus as an app tile in Olympus — no Chrome extension required. Embedding in other apps like Athena is optional and can be done at any point once the SDK exists.
+
+### Primary goal — Argus tile in Olympus
+
+- Argus appears as its own app tile in the Olympus dashboard (alongside Athena)
+- Users launch Argus from Olympus and get full capture functionality in-browser
+- Auto-identifies the user from the Olympus session — no separate login
+- All captures surface in the Argus app and are tied to the logged-in Olympus account
 
 ### `argus.js` SDK
 
-A single script tag any web app embeds to get full Argus functionality:
+A single script tag that powers the Olympus tile and can optionally be embedded in any other app:
 
 ```html
 <script src="https://project-argus-brw6.onrender.com/sdk/argus.js"
-        data-project="athena">
+        data-project="my-project">
 </script>
 ```
 
@@ -115,15 +138,11 @@ A single script tag any web app embeds to get full Argus functionality:
 - Console log capture via `console` monkey-patching
 - Network log capture via `fetch` / `XHR` interception
 - Same "New Bug Capture" modal UI
-- Auto-identifies user from the Olympus session
 - `data-project` attribute auto-files captures under the correct project
 
-### Olympus integration
+### Optional — embed in other apps (e.g. Athena)
 
-- Argus appears as an app tile in the Olympus dashboard (alongside Athena)
-- Athena embeds `argus.js` with `data-project="athena"` — capture button lives inside the Athena UI
-- Standalone Argus app in Olympus shows all captures across all projects
-- Both entry points share the same server and reports
+Once the SDK exists, any internal app can add the script tag to get a capture button directly in their UI. Captures are auto-tagged with the app's project. This is optional and not required for the Olympus tile to work.
 
 ---
 
