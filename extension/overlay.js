@@ -1,4 +1,4 @@
-window.ArgusOverlay = (() => {
+window.ArgusOverlay = window.ArgusOverlay || (() => {
   const Z_INDEX = 2147483647;
 
   const STYLES = `

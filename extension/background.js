@@ -389,13 +389,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         setTimeout(() => detachDebugger(tabId), 1000);
         if (msg.source === 'desktop') {
-          chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY', recordingTabId: tabId })
+          // Injects content scripts into a tab if they aren't already loaded
+          // (covers tabs opened before the extension was installed/reloaded).
+          const ensureScripts = async (targetTabId) => {
+            await chrome.scripting.executeScript({
+              target: { tabId: targetTabId, allFrames: true },
+              files: ['overlay.js', 'content.js'],
+            });
+            await new Promise((r) => setTimeout(r, 100));
+          };
+
+          const sendReady = async (targetTabId, recordingTabId) => {
+            await ensureScripts(targetTabId).catch(() => {});
+            await chrome.tabs.sendMessage(targetTabId, {
+              type: 'DESKTOP_RECORDING_READY',
+              recordingTabId,
+            });
+          };
+
+          sendReady(tabId, tabId)
             .then(() => {
-              // Focus the tab where recording started so the modal is visible.
               chrome.tabs.update(tabId, { active: true }).catch(() => {});
             })
             .catch(async () => {
-              // Tab is an extension page — content script can't run there.
+              // Original tab is an extension page or can't receive messages.
               // Fall back to the most recently active http/https tab.
               const tabs = await chrome.tabs.query({}).catch(() => []);
               const webTab = tabs
@@ -403,7 +420,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 .sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
               if (webTab) {
                 await chrome.tabs.update(webTab.id, { active: true }).catch(() => {});
-                chrome.tabs.sendMessage(webTab.id, { type: 'DESKTOP_RECORDING_READY', recordingTabId: tabId })
+                sendReady(webTab.id, tabId)
                   .catch(() => chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') }));
               } else {
                 chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') });

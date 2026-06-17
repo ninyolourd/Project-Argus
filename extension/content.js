@@ -1,4 +1,7 @@
 (() => {
+  if (window.__argusContentLoaded) return;
+  window.__argusContentLoaded = true;
+
   const isTopFrame = window.top === window.self;
 
   const script = document.createElement('script');
