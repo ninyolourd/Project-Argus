@@ -389,7 +389,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         setTimeout(() => detachDebugger(tabId), 1000);
         if (msg.source === 'desktop') {
-          chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY' }).catch(() => {});
+          chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY' }).catch(() => {
+            chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') });
+          });
         }
       })().catch(console.error);
       return false;
@@ -485,7 +487,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     case 'SUBMIT_REPORT': {
       (async () => {
         try {
-          const tabId = sender.tab?.id ?? msg.tabId;
+          const tabId = msg.tabId ?? sender.tab?.id;
           let captureType = msg.captureType;
           let dataUrl = msg.dataUrl;
           let base64 = msg.base64;
