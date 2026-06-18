@@ -45,11 +45,11 @@
 }
 
 .brand-mark {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 5px solid var(--color-primary);
+  object-fit: cover;
 }
 
 .brand h1 {
