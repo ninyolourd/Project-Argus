@@ -7,13 +7,13 @@
   --color-text-muted: #6e6e7c;
   --color-text-faint: #9a9aa8;
 
-  --color-primary: #22c55e;
-  --color-primary-hover: #16a34a;
-  --color-primary-dark: #15803d;
-  --color-primary-soft: #ecfdf5;
+  --color-primary: #0099ff;
+  --color-primary-hover: #007acc;
+  --color-primary-dark: #005fa3;
+  --color-primary-soft: #e6f4ff;
 
-  --color-accent: #3b6fe0;
-  --color-accent-soft: #eef3ff;
+  --color-accent: #00d4ff;
+  --color-accent-soft: #e0faff;
 
   --color-success: #16a34a;
   --color-success-soft: #ecfdf3;

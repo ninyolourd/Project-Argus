@@ -16,7 +16,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       box-shadow: 0 4px 16px rgba(20,20,30,0.14);
     }
     .selection-rect {
-      position: fixed; border: 2px dashed #22c55e;
+      position: fixed; border: 2px dashed #0099ff;
       box-shadow: 0 0 0 9999px rgba(15, 16, 20, 0.45);
       pointer-events: none;
     }
@@ -48,7 +48,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       border-radius: 14px; padding: 18px; width: min(480px, 92vw);
       max-height: 88vh; overflow: auto; box-shadow: 0 12px 32px rgba(20,20,30,0.18);
     }
-    .modal-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #15803d; }
+    .modal-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #005fa3; }
     .modal-preview img, .modal-preview video {
       width: 100%; border-radius: 10px; display: block; margin-bottom: 12px;
       background: #000;
@@ -61,7 +61,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
     }
     .modal-card textarea:focus,
     .modal-card input[type="text"]:focus {
-      outline: none; border-color: #22c55e; background: #ffffff;
+      outline: none; border-color: #0099ff; background: #ffffff;
     }
     .modal-card input[type="text"] {
       min-height: 0; height: 36px;
@@ -77,14 +77,14 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       transition: background 0.15s ease, transform 0.05s ease;
     }
     .modal-actions button:active:not(:disabled) { transform: translateY(1px); }
-    .btn-primary { background: #22c55e; color: #ffffff; }
-    .btn-primary:hover:not(:disabled) { background: #16a34a; }
+    .btn-primary { background: #0099ff; color: #ffffff; }
+    .btn-primary:hover:not(:disabled) { background: #007acc; }
     .btn-primary:disabled { background: #e6e6ef; color: #9a9aa8; cursor: not-allowed; }
     .btn-secondary { background: #f4f4f8; color: #16161d; border: 1px solid #e6e6ef; }
     .btn-secondary:hover:not(:disabled) { background: #e6e6ef; }
     .modal-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #6e6e7c; }
     .modal-status.error { color: #dc2626; }
-    .modal-status.success { color: #16a34a; }
+    .modal-status.success { color: #007acc; }
   `;
 
   function createHost(id) {
