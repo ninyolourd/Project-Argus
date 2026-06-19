@@ -1,6 +1,6 @@
 # Argus — Roadmap
 
-Planned features and ideas beyond the current core (Chrome extension + Node/Express server).
+Argus is a bug capture mini app with Chrome extension capabilities — screenshot, screen recording, console/network logs, and shareable report links. Planned for integration into Hephaestus as a standalone app tile.
 
 ---
 
@@ -73,29 +73,56 @@ The recording-controls window currently opens as a separate Chrome window and ca
 
 ---
 
-## Phase 1 — Accounts (Olympus SSO)
+## Phase 1 — AI-Powered Automated Bug Report Generation
 
-> Use Olympus's existing account management — no separate sign-up or login flow in Argus.
+> Automatically generate a structured, readable bug report from the captured screenshot/recording and logs — no manual description needed.
 
-- Argus server validates tokens issued by Olympus (need to confirm: JWT, session cookie, OAuth, or custom)
-- Extension gets the Olympus token and stores it in `chrome.storage.local`
-- `argusUserName` replaced by the Olympus display name from the token
-- Report ownership tied to Olympus user ID, not just `?owner=1` URL param
-- "Commenting as" field fully auto-filled and disabled for authenticated users
+### What it does
 
-> **Pending:** confirm Olympus auth mechanism and whether a `/me` or token-validation endpoint exists.
+When a user completes a capture, an AI model analyzes the available context and generates:
+- **Title** — a concise bug report title based on what's visible or what went wrong
+- **Description** — a structured summary covering what happened, what was expected, and the likely environment context
+- **Steps to reproduce** — inferred from the console/network log sequence
+- **Severity suggestion** — Low / Medium / High / Critical based on error signals in the logs
+
+The generated content pre-fills the report fields. Users can edit before saving or accept as-is.
+
+### How it works
+
+- On submit, the server sends the capture metadata + console/network logs to an AI API (e.g. Claude API)
+- For screenshots: the image is passed to a vision-capable model to describe what's on screen
+- For recordings: the first and last frames are extracted and passed alongside the log data
+- The AI response populates the report's title and description fields server-side before the report URL is returned
+
+### Why this first
+
+Automated report generation adds the most value with the least infrastructure dependency — no accounts, no projects, no SDK required. It makes every report better immediately, for all current users.
 
 ---
 
-## Phase 2 — Projects & Folders
+## Phase 2 — Accounts (Hephaestus SSO)
+
+> Use Hephaestus's existing account management — no separate sign-up or login flow in Argus.
+
+- Argus server validates tokens issued by Hephaestus (need to confirm: JWT, session cookie, OAuth, or custom)
+- Extension gets the Hephaestus token and stores it in `chrome.storage.local`
+- `argusUserName` replaced by the Hephaestus display name from the token
+- Report ownership tied to Hephaestus user ID, not just `?owner=1` URL param
+- "Commenting as" field fully auto-filled and disabled for authenticated users
+
+> **Pending:** confirm Hephaestus auth mechanism and whether a `/me` or token-validation endpoint exists.
+
+---
+
+## Phase 3 — Projects & Folders
 
 > Organise captures by project so teams can separate bugs by app or client.
 
 ### Data model
 
 ```
-User (Olympus account)
-└── Projects  (Athena, Olympus Core, Client X…)
+User (Hephaestus account)
+└── Projects  (Athena, Hephaestus Core, Client X…)
     └── Bug Captures  (screenshots, recordings)
 ```
 
@@ -104,26 +131,31 @@ User (Olympus account)
 - **Project CRUD** — create, rename, delete projects
 - **Link grouping** — library page shows captures grouped under their project; switch projects via sidebar or tab
 - **Assign on capture** — extension popup shows a project dropdown before submitting; defaults to last-used project
-- **Auto-tagging via SDK** — when `argus.js` is embedded in an app (e.g. Athena), it passes a `projectId` so captures are automatically filed under the right project
+- **Auto-tagging via SDK** — when `argus.js` is embedded in an app, it passes a `projectId` so captures are automatically filed under the right project
 - **Shared projects** — invite teammates so everyone sees the same captures
 - **Link expiry** — optional per-project or per-capture expiry, max 90 days; expired links return a clear "report no longer available" page
 
 ---
 
-## Phase 3 — Web SDK & Olympus Integration
+## Phase 4 — Mini App & Hephaestus Integration
 
-> Add Argus as an app tile in Olympus — no Chrome extension required. Embedding in other apps like Athena is optional and can be done at any point once the SDK exists.
+> Argus evolves from a pure Chrome extension into a mini app with extension capabilities — a full web interface for managing reports, accessible from the Hephaestus dashboard.
 
-### Primary goal — Argus tile in Olympus
+### Architecture
 
-- Argus appears as its own app tile in the Olympus dashboard (alongside Athena)
-- Users launch Argus from Olympus and get full capture functionality in-browser
-- Auto-identifies the user from the Olympus session — no separate login
-- All captures surface in the Argus app and are tied to the logged-in Olympus account
+- **Web app** (primary) — full Argus UI hosted on the server; login via Hephaestus SSO; accessible from any browser without installing the extension
+- **Chrome extension** (companion) — adds capture capabilities (screenshot, recording, logs) to any page; submits to the same backend
+- Both share the same reports, projects, and user accounts
 
-### `argus.js` SDK
+### Hephaestus integration
 
-A single script tag that powers the Olympus tile and can optionally be embedded in any other app:
+- Argus appears as its own app tile in the Hephaestus dashboard
+- Users can manage all reports, projects, and team members from the Argus web app
+- The extension is an optional power-user tool for teams who want in-page capture
+
+### `argus.js` SDK (optional embedding)
+
+Any internal app can embed a script tag to get a capture button directly in their UI:
 
 ```html
 <script src="https://project-argus-brw6.onrender.com/sdk/argus.js"
@@ -131,22 +163,11 @@ A single script tag that powers the Olympus tile and can optionally be embedded 
 </script>
 ```
 
-**What it provides:**
-- Floating capture button (or programmatic trigger)
-- Screenshot via `html2canvas` + annotation layer
-- Screen recording via `getDisplayMedia`
-- Console log capture via `console` monkey-patching
-- Network log capture via `fetch` / `XHR` interception
-- Same "New Bug Capture" modal UI
-- `data-project` attribute auto-files captures under the correct project
-
-### Optional — embed in other apps (e.g. Athena)
-
-Once the SDK exists, any internal app can add the script tag to get a capture button directly in their UI. Captures are auto-tagged with the app's project. This is optional and not required for the Olympus tile to work.
+Captures are auto-tagged with the app's project. This is optional and independent of the Hephaestus tile.
 
 ---
 
-## Phase 4 — Collaboration & Workflow
+## Phase 5 — Collaboration & Workflow
 
 - **Request link** — send a link asking a specific user to capture and submit a bug report (similar to Jam.dev's request feature)
 - **Status tags** — mark a report as Open / In Progress / Resolved
@@ -159,7 +180,8 @@ Once the SDK exists, any internal app can add the script tag to get a capture bu
 
 ## Notes
 
-- Greek mythology naming convention in Olympus: Athena, Argus — keep the pattern for any new tools
+- Greek mythology naming convention in Hephaestus platform: Athena, Argus — keep the pattern for any new tools
 - Argus server is on Render free tier — upgrade if team traffic grows
 - B2 free tier: 10 GB storage, no egress fees
-- Accounts (Phase 1) unlocks everything else — confirm Olympus auth details before starting
+- Phase 1 (AI generation) can ship independently — no auth or project infra needed
+- Phase 2 (Accounts) unlocks everything from Phase 3 onward
