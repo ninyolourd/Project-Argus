@@ -62,11 +62,11 @@ Argus is a bug capture mini app with Chrome extension capabilities — screensho
 
 > Issues and enhancements on the current extension before moving to the next phase.
 
-### Bug: Save prompt sometimes doesn't appear after recording
-Recording stops but the "New Bug Capture" modal never shows. Workaround is to go to the Drafts page and save from there. Root cause has been partially addressed (content script injection on tabs opened before extension install) but still occurs in some cases.
+### Bug: Save prompt sometimes doesn't appear after recording — ✅ Done (2026-06-19)
+Root cause: tab recordings sent `RECORDING_DATA` with no `source`, so the background's notification block (desktop-only) was skipped and the modal was driven solely by the content script's in-tab poll — which is lost if the tab navigates while the video encodes. Fixed by routing both tab and desktop recordings through one `notifyRecordingReady()` in the background that re-injects scripts, sends `RECORDING_READY`, falls back to the most recently used web tab, and only opens Drafts as a last resort. Also fixed a related "Receiving end does not exist" error by injecting content scripts on demand from the popup (covers tabs opened before the extension was reloaded).
 
-### Screenshot annotation
-Before the "New Bug Capture" modal confirms a save, users should be able to mark up the screenshot — add text labels, highlight areas, draw arrows. Freehand drawing is the minimum; shapes and text on top would be ideal.
+### Screenshot annotation — ✅ Done (2026-06-19)
+The screenshot preview modal now has a canvas annotator: pen (freehand), arrow, box, and text tools in six colors, with undo and clear-all. Text is placed via an inline input where the user clicks. Annotations are flattened onto the screenshot at full resolution on save.
 
 ### Floating stop widget for desktop recording — ✅ Done (2026-06-19)
 The recording-controls window previously stayed visible as a small bar and could get lost behind other windows or buried in the taskbar. It now minimizes itself once capture starts, and a floating "Stop Recording" pill (the same in-page widget tab recording uses) is injected into the current page. The pill follows the user across tab switches and relays a stop request to the minimized window that owns the MediaRecorder. Chrome's native "Stop sharing" bar remains as a fallback.

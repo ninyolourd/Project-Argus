@@ -291,6 +291,44 @@ function broadcastDesktopRecordingEnded() {
   });
 }
 
+// Once a recording is stored, tell a content script to show the preview/save
+// modal. Driving this from the background (rather than the in-page stop flow)
+// means the modal survives navigation or loss of the recording tab: if that
+// tab can't receive the message we fall back to the most recently used web
+// tab, and only as a last resort open the Drafts page. Used for both tab and
+// desktop recordings.
+async function notifyRecordingReady(recordingTabId) {
+  const sendReady = async (targetTabId) => {
+    await ensureScripts(targetTabId).catch(() => {});
+    await chrome.tabs.sendMessage(targetTabId, { type: 'RECORDING_READY', recordingTabId });
+  };
+
+  try {
+    await sendReady(recordingTabId);
+    chrome.tabs.update(recordingTabId, { active: true }).catch(() => {});
+    return;
+  } catch {
+    // The recording tab is gone or can't receive messages (e.g. it navigated
+    // to a chrome:// page). Fall back to the most recently active web tab.
+  }
+
+  const tabs = await chrome.tabs.query({}).catch(() => []);
+  const webTab = tabs
+    .filter((t) => t.id !== recordingTabId && /^https?:/.test(t.url || ''))
+    .sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
+
+  if (webTab) {
+    await chrome.tabs.update(webTab.id, { active: true }).catch(() => {});
+    try {
+      await sendReady(webTab.id);
+      return;
+    } catch {
+      // fall through to Drafts
+    }
+  }
+  chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') });
+}
+
 // Keep the floating stop pill in front of the user as they change tabs.
 chrome.tabs.onActivated.addListener(({ tabId }) => {
   for (const [recTabId, source] of activeRecordings) {
@@ -442,35 +480,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (msg.source === 'desktop') {
           // Remove the floating stop pill from any tab it was shown on.
           broadcastDesktopRecordingEnded();
-
-          const sendReady = async (targetTabId, recordingTabId) => {
-            await ensureScripts(targetTabId).catch(() => {});
-            await chrome.tabs.sendMessage(targetTabId, {
-              type: 'DESKTOP_RECORDING_READY',
-              recordingTabId,
-            });
-          };
-
-          sendReady(tabId, tabId)
-            .then(() => {
-              chrome.tabs.update(tabId, { active: true }).catch(() => {});
-            })
-            .catch(async () => {
-              // Original tab is an extension page or can't receive messages.
-              // Fall back to the most recently active http/https tab.
-              const tabs = await chrome.tabs.query({}).catch(() => []);
-              const webTab = tabs
-                .filter((t) => /^https?:/.test(t.url || ''))
-                .sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
-              if (webTab) {
-                await chrome.tabs.update(webTab.id, { active: true }).catch(() => {});
-                sendReady(webTab.id, tabId)
-                  .catch(() => chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') }));
-              } else {
-                chrome.tabs.create({ url: chrome.runtime.getURL('drafts/drafts.html') });
-              }
-            });
         }
+        notifyRecordingReady(tabId);
       })().catch(console.error);
       return false;
     }

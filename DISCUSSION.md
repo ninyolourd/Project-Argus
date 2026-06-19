@@ -373,3 +373,33 @@ Chrome's native "Stop sharing" bar remains as an always-present fallback. `Argus
 
 ### Commits this session
 - (see git log)
+
+---
+
+## Session — 2026-06-19 (Save-Prompt Bug, Screenshot Annotation, Popup Injection Fix)
+
+### Save-prompt bug — root cause & fix
+
+**Root cause:** Tab recordings sent `RECORDING_DATA` from the offscreen document with no `source` field, so the background's notification logic (which was gated on `msg.source === 'desktop'`) was skipped entirely. The "New Bug Capture" modal was therefore shown *only* by the content script's in-tab `waitForRecording` poll started in `performStop`. If the user navigated the recording tab while the (possibly large) video was still encoding/storing, that content script was destroyed mid-poll — modal lost, draft saved. That was the "go to Drafts and save from there" workaround.
+
+**Fix:** Both tab and desktop recordings now flow through a single `notifyRecordingReady(tabId)` in `background.js`, called after the recording is stored:
+- Re-injects `overlay.js` + `content.js` and sends `RECORDING_READY` to the recording tab.
+- Falls back to the most recently active `http(s)` tab if the recording tab is gone or un-injectable.
+- Opens the Drafts page only as a last resort.
+
+`performStop` no longer shows the modal itself on success (it still handles the too-short / no-active-recording error inline) — the background drives the preview so it survives tab navigation. `DESKTOP_RECORDING_READY` was unified to `RECORDING_READY`; `showDesktopRecordingPreview` → `showStoredRecordingPreview`.
+
+### Screenshot annotation
+
+Added a canvas annotator to the screenshot preview modal (`overlay.js`, `createImageAnnotator`):
+- Tools: pen (freehand), arrow, box, text — six colors, undo (↶), clear-all (🗑).
+- Text via an inline textarea placed where the user clicks (Enter commits, Esc cancels, Shift+Enter newline).
+- Annotations are kept as a shape list (cheap undo) and flattened onto the original image at full resolution; arrows/text get a dark outline for legibility.
+- `showPreviewModal` passes the annotated PNG to `onCreate({ name, notes, image })`; `content.js` submits `image || cropped`. Video previews unchanged.
+
+### Popup content-script injection fix
+
+While testing, the popup threw `Could not establish connection. Receiving end does not exist.` Cause: reloading an unpacked extension does not re-inject manifest content scripts into already-open tabs, so `chrome.tabs.sendMessage` had no listener. Added `ensureContentScripts(tabId)` in `popup/popup.js` — injects the scripts on demand (idempotent) before screenshot selection, tab-recording start, and tab-recording stop. Restricted pages (`chrome://`, Web Store) now show a friendly message instead of the raw error.
+
+### Commits this session
+- (see git log)

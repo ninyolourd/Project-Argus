@@ -85,6 +85,34 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
     .modal-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #6e6e7c; }
     .modal-status.error { color: #dc2626; }
     .modal-status.success { color: #007acc; }
+
+    .annot-toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 8px;
+    }
+    .annot-tool {
+      min-width: 30px; height: 28px; padding: 0 6px; border: 1px solid #e6e6ef;
+      background: #f4f4f8; color: #16161d; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .annot-tool:hover { background: #e6e6ef; }
+    .annot-tool.active { background: #0099ff; color: #ffffff; border-color: #0099ff; }
+    .annot-sep { width: 1px; height: 20px; background: #e6e6ef; margin: 0 3px; }
+    .annot-color {
+      width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; padding: 0;
+    }
+    .annot-color.active { border-color: #16161d; }
+    .annot-canvas-wrap { position: relative; line-height: 0; margin-bottom: 12px; }
+    .annot-canvas {
+      width: 100%; border-radius: 10px; display: block; background: #000;
+      cursor: crosshair; touch-action: none;
+    }
+    .annot-text-input {
+      position: absolute; border: 1px dashed #0099ff; background: rgba(255,255,255,0.9);
+      font-weight: 700; padding: 1px 3px; outline: none; resize: none; overflow: hidden;
+      line-height: 1.2; white-space: pre; min-width: 28px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
   `;
 
   function createHost(id) {
@@ -204,6 +232,279 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
     };
   }
 
+  // Lightweight canvas annotator for screenshots: pen, arrow, box, and text
+  // in a few colors, with undo/clear. Returns the element to mount plus a
+  // toDataURL() that flattens the annotations onto the original image.
+  function createImageAnnotator(src) {
+    const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#0099ff', '#16161d', '#ffffff'];
+    const TOOLS = [
+      { id: 'pen', label: '✏️', title: 'Pen' },
+      { id: 'arrow', label: '↗', title: 'Arrow' },
+      { id: 'rect', label: '▭', title: 'Box' },
+      { id: 'text', label: 'T', title: 'Text' },
+    ];
+
+    let color = COLORS[0];
+    let tool = 'pen';
+    let ready = false;
+    let current = null;
+    let textInput = null;
+    const shapes = [];
+    const img = new Image();
+
+    const wrap = document.createElement('div');
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'annot-toolbar';
+
+    const toolBtns = {};
+    TOOLS.forEach((t) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'annot-tool' + (t.id === tool ? ' active' : '');
+      b.textContent = t.label;
+      b.title = t.title;
+      b.addEventListener('click', () => setTool(t.id));
+      toolbar.appendChild(b);
+      toolBtns[t.id] = b;
+    });
+
+    const sep1 = document.createElement('span');
+    sep1.className = 'annot-sep';
+    toolbar.appendChild(sep1);
+
+    const colorBtns = {};
+    COLORS.forEach((c) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'annot-color' + (c === color ? ' active' : '');
+      b.style.background = c;
+      if (c === '#ffffff') b.style.borderColor = '#e6e6ef';
+      b.title = c;
+      b.addEventListener('click', () => setColor(c));
+      toolbar.appendChild(b);
+      colorBtns[c] = b;
+    });
+
+    const sep2 = document.createElement('span');
+    sep2.className = 'annot-sep';
+    toolbar.appendChild(sep2);
+
+    const undoBtn = document.createElement('button');
+    undoBtn.type = 'button';
+    undoBtn.className = 'annot-tool';
+    undoBtn.textContent = '↶';
+    undoBtn.title = 'Undo';
+    undoBtn.addEventListener('click', () => {
+      commitText();
+      shapes.pop();
+      redraw();
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'annot-tool';
+    clearBtn.textContent = '🗑';
+    clearBtn.title = 'Clear all';
+    clearBtn.addEventListener('click', () => {
+      commitText();
+      shapes.length = 0;
+      redraw();
+    });
+
+    toolbar.appendChild(undoBtn);
+    toolbar.appendChild(clearBtn);
+
+    const canvasWrap = document.createElement('div');
+    canvasWrap.className = 'annot-canvas-wrap';
+    const canvas = document.createElement('canvas');
+    canvas.className = 'annot-canvas';
+    const ctx = canvas.getContext('2d');
+    canvasWrap.appendChild(canvas);
+
+    wrap.appendChild(toolbar);
+    wrap.appendChild(canvasWrap);
+
+    function setTool(id) {
+      commitText();
+      tool = id;
+      Object.entries(toolBtns).forEach(([k, b]) => b.classList.toggle('active', k === id));
+    }
+
+    function setColor(c) {
+      color = c;
+      Object.entries(colorBtns).forEach(([k, b]) => b.classList.toggle('active', k === c));
+    }
+
+    function lineWidth() {
+      return Math.max(2, Math.round(canvas.width / 350));
+    }
+
+    function fontSize() {
+      return Math.max(14, Math.round(canvas.width / 38));
+    }
+
+    function pos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+
+    function drawArrow(g, x0, y0, x1, y1, w) {
+      const head = Math.max(8, w * 4);
+      const ang = Math.atan2(y1 - y0, x1 - x0);
+      g.beginPath();
+      g.moveTo(x0, y0);
+      g.lineTo(x1, y1);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(x1, y1);
+      g.lineTo(x1 - head * Math.cos(ang - Math.PI / 6), y1 - head * Math.sin(ang - Math.PI / 6));
+      g.lineTo(x1 - head * Math.cos(ang + Math.PI / 6), y1 - head * Math.sin(ang + Math.PI / 6));
+      g.closePath();
+      g.fill();
+    }
+
+    function drawShape(g, s) {
+      g.strokeStyle = s.color;
+      g.fillStyle = s.color;
+      g.lineWidth = s.width;
+      g.lineJoin = 'round';
+      g.lineCap = 'round';
+      if (s.type === 'pen') {
+        g.beginPath();
+        s.points.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+        g.stroke();
+      } else if (s.type === 'rect') {
+        g.strokeRect(s.x0, s.y0, s.x1 - s.x0, s.y1 - s.y0);
+      } else if (s.type === 'arrow') {
+        drawArrow(g, s.x0, s.y0, s.x1, s.y1, s.width);
+      } else if (s.type === 'text') {
+        g.font = `700 ${s.size}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+        g.textBaseline = 'top';
+        g.lineWidth = Math.max(2, s.size / 8);
+        g.strokeStyle = 'rgba(0,0,0,0.55)';
+        s.text.split('\n').forEach((line, i) => {
+          const y = s.y + i * s.size * 1.2;
+          g.strokeText(line, s.x, y);
+          g.fillText(line, s.x, y);
+        });
+      }
+    }
+
+    function redraw() {
+      if (!ready) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      shapes.forEach((s) => drawShape(ctx, s));
+      if (current) drawShape(ctx, current);
+    }
+
+    function startText(e) {
+      commitText();
+      const p = pos(e);
+      const rect = canvas.getBoundingClientRect();
+      const displayScale = rect.width / canvas.width;
+      textInput = document.createElement('textarea');
+      textInput.className = 'annot-text-input';
+      textInput.rows = 1;
+      textInput.style.left = `${e.clientX - rect.left}px`;
+      textInput.style.top = `${e.clientY - rect.top}px`;
+      textInput.style.color = color;
+      textInput.style.fontSize = `${Math.max(12, fontSize() * displayScale)}px`;
+      textInput._cx = p.x;
+      textInput._cy = p.y;
+      canvasWrap.appendChild(textInput);
+      setTimeout(() => textInput.focus(), 0);
+      textInput.addEventListener('keydown', (ev) => {
+        ev.stopPropagation();
+        if (ev.key === 'Enter' && !ev.shiftKey) {
+          ev.preventDefault();
+          commitText();
+        } else if (ev.key === 'Escape') {
+          const t = textInput;
+          textInput = null;
+          t.remove();
+        }
+      });
+      textInput.addEventListener('blur', commitText);
+    }
+
+    function commitText() {
+      if (!textInput) return;
+      const val = textInput.value.replace(/\s+$/, '');
+      const cx = textInput._cx;
+      const cy = textInput._cy;
+      const col = textInput.style.color || color;
+      const t = textInput;
+      textInput = null;
+      t.remove();
+      if (val.trim()) {
+        shapes.push({ type: 'text', color: col, x: cx, y: cy, size: fontSize(), text: val });
+        redraw();
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!ready) return;
+      if (tool === 'text') {
+        startText(e);
+        return;
+      }
+      const p = pos(e);
+      canvas.setPointerCapture(e.pointerId);
+      if (tool === 'pen') {
+        current = { type: 'pen', color, width: lineWidth(), points: [p] };
+      } else {
+        current = { type: tool, color, width: lineWidth(), x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+      }
+      redraw();
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!current) return;
+      const p = pos(e);
+      if (current.type === 'pen') current.points.push(p);
+      else {
+        current.x1 = p.x;
+        current.y1 = p.y;
+      }
+      redraw();
+    });
+
+    function finishStroke() {
+      if (!current) return;
+      const keep =
+        current.type === 'pen'
+          ? current.points.length > 1
+          : Math.hypot(current.x1 - current.x0, current.y1 - current.y0) > 4;
+      if (keep) shapes.push(current);
+      current = null;
+      redraw();
+    }
+
+    canvas.addEventListener('pointerup', finishStroke);
+    canvas.addEventListener('pointercancel', finishStroke);
+
+    img.onload = () => {
+      ready = true;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      redraw();
+    };
+    img.src = src;
+
+    return {
+      element: wrap,
+      toDataURL() {
+        commitText();
+        return ready ? canvas.toDataURL('image/png') : src;
+      },
+    };
+  }
+
   function showPreviewModal({ kind, src, defaultName, onCreate }) {
     const { host, shadow } = createHost('argus-modal-host');
 
@@ -218,10 +519,12 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
 
     const preview = document.createElement('div');
     preview.className = 'modal-preview';
+    let annotator = null;
     if (kind === 'video') {
       preview.innerHTML = `<video src="${src}" controls></video>`;
     } else {
-      preview.innerHTML = `<img src="${src}" alt="Screenshot preview" />`;
+      annotator = createImageAnnotator(src);
+      preview.appendChild(annotator.element);
     }
 
     const nameLabel = document.createElement('label');
@@ -274,7 +577,11 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       status.textContent = 'Submitting…';
 
       try {
-        const result = await onCreate({ name: nameInput.value.trim(), notes: notes.value });
+        const result = await onCreate({
+          name: nameInput.value.trim(),
+          notes: notes.value,
+          image: annotator ? annotator.toDataURL() : undefined,
+        });
         if (!result || !result.ok) {
           throw new Error((result && result.error) || 'Submission failed');
         }

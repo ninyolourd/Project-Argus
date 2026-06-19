@@ -98,10 +98,10 @@
         kind: 'image',
         src: cropped,
         defaultName: `Screenshot - ${document.title}`,
-        onCreate: async ({ name, notes }) => {
+        onCreate: async ({ name, notes, image }) => {
           const result = await submitReport({
             captureType: 'image',
-            dataUrl: cropped,
+            dataUrl: image || cropped,
             name,
             notes,
             metadata: getPageInfo(),
@@ -148,18 +148,12 @@
       }
       return;
     }
-
-    const rec = await waitForRecording();
-    if (stopWidget) {
-      stopWidget.remove();
-      stopWidget = null;
-    }
-
-    if (!rec) return;
-    showRecordingPreview(rec);
+    // On success the background stores the recording and drives the preview
+    // modal via RECORDING_READY, so it survives navigation of this tab. The
+    // pill stays in its "Processing…" state until RECORDING_READY removes it.
   }
 
-  async function showDesktopRecordingPreview(recordingTabId = null) {
+  async function showStoredRecordingPreview(recordingTabId = null) {
     const rec = await waitForRecording(30, recordingTabId);
     if (rec) showRecordingPreview(rec);
   }
@@ -178,7 +172,7 @@
 
   // Floating pill shown during a desktop recording. Clicking it asks the
   // background to relay a stop to the recording-controls window that owns the
-  // MediaRecorder; the resulting recording arrives via DESKTOP_RECORDING_READY.
+  // MediaRecorder; the resulting recording arrives via RECORDING_READY.
   function showDesktopRecordingControls(recordingTabId) {
     if (stopWidget) return;
     stopWidget = window.ArgusOverlay.showStopButton(() => {
@@ -212,10 +206,10 @@
       if (isTopFrame) performStop();
       return false;
     }
-    if (msg.type === 'DESKTOP_RECORDING_READY') {
+    if (msg.type === 'RECORDING_READY') {
       if (isTopFrame) {
         removeStopWidget();
-        showDesktopRecordingPreview(msg.recordingTabId ?? null);
+        showStoredRecordingPreview(msg.recordingTabId ?? null);
       }
       return false;
     }

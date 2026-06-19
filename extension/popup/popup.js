@@ -125,10 +125,25 @@ async function restoreRecordingState() {
   els.hint.textContent = 'Click to stop and save your recording.';
 }
 
+// Manifest content scripts are only injected on page load, so tabs that were
+// already open when the extension was installed/reloaded have no listener.
+// Inject the scripts on demand (idempotent) before messaging the tab.
+async function ensureContentScripts(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      files: ['overlay.js', 'content.js'],
+    });
+  } catch {
+    throw new Error('Argus can’t run on this page. Open a normal website tab and try again.');
+  }
+}
+
 async function onActionClick() {
   els.actionBtn.disabled = true;
   try {
     if (state.mode === 'screenshot') {
+      await ensureContentScripts(state.tab.id);
       await chrome.tabs.sendMessage(state.tab.id, { type: 'START_SCREENSHOT_SELECTION' });
       window.close();
       return;
@@ -138,6 +153,7 @@ async function onActionClick() {
       if (state.activeSource === 'desktop') {
         chrome.runtime.sendMessage({ type: 'STOP_DESKTOP_RECORDING', tabId: state.tab.id }).catch(() => {});
       } else {
+        await ensureContentScripts(state.tab.id);
         await chrome.tabs.sendMessage(state.tab.id, { type: 'STOP_RECORDING_REQUEST' });
       }
       window.close();
@@ -147,6 +163,9 @@ async function onActionClick() {
     // Desktop recording is handled entirely by the floating "Argus Recording"
     // window (it calls getDisplayMedia itself, which needs a user gesture in
     // that window), so no streamId is needed here for the desktop source.
+    if (state.recordingSource === 'tab') {
+      await ensureContentScripts(state.tab.id);
+    }
     const streamId =
       state.recordingSource === 'desktop' ? null : await chrome.tabCapture.getMediaStreamId({ targetTabId: state.tab.id });
 
