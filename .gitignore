@@ -3,3 +3,7 @@
 server/.env
 server/node_modules/
 server/data/
+
+# Source logo files (processed versions committed under extension/icons/ and server/public/)
+Argus_Logo.jpg
+Argus2.jpg

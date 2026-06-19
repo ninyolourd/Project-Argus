@@ -272,6 +272,43 @@ chrome.tabs.sendMessage(tabId, { type: 'DESKTOP_RECORDING_READY', recordingTabId
 - `fix: focus original tab so preview modal is visible after desktop recording` (3274619)
 - `fix: inject content scripts before sending DESKTOP_RECORDING_READY` (8412d8d)
 
+---
+
+## Session — 2026-06-19 (Roadmap, Rebrand & Logo)
+
+### Roadmap created
+
+`ROADMAP.md` created and iteratively updated to capture the full product direction:
+- **Current State** — what's built and shipped
+- **Tech Stack** — server, storage, languages, extension internals
+- **Bug Log** — 8 fixed issues + 1 open/intermittent, each with root cause and fix
+- **Near-term** — save prompt bug, screenshot annotation, floating stop widget (from QA feedback)
+- **Phase 1** — Accounts via Olympus SSO (pending Olympus auth details)
+- **Phase 2** — Projects & folders, link grouping, 90-day link expiry
+- **Phase 3** — Web SDK (`argus.js`) + Argus as an Olympus dashboard tile; embedding in other apps (e.g. Athena) is optional
+- **Phase 4** — Collaboration: request links, status tags, assignees, Slack/Jira
+
+Key decisions:
+- Accounts must come before projects, which must come before the SDK — each phase unblocks the next
+- Argus in Olympus = standalone tile first; embedding in Athena is opt-in for any team once the SDK exists
+- Olympus SSO replaces the current `argusUserName` / `?owner=1` ownership model
+
+### Rebrand — Argus logo + blue theme
+
+- **New logo**: `Argus2.jpg` — dark navy background, cyan-to-blue gradient "A" with corner brackets and eye element, no text
+- **Icons**: Generated circular PNGs (16/48/128 px) from logo using Pillow; replace old green ring icons
+- **Theme**: Green (`#22c55e`) replaced with logo blue (`#0099ff`); hover `#007acc`, dark `#005fa3`, soft `#e6f4ff`; cyan accent `#00d4ff`
+- **Files updated**: `extension/shared/theme.css`, `server/public/report.css`, `extension/overlay.js` (hardcoded hex values), all extension HTML headers (`popup`, `library`, `drafts`), `server/public/report.html`
+- **Brand mark**: Changed from CSS-only ring (`border: 5px solid var(--color-primary)`) to circular `<img>` tag using the logo
+- **`.gitignore`**: Source logo files (`Argus_Logo.jpg`, `Argus2.jpg`) excluded — only processed PNGs are committed
+
+### Commits this session
+- `feat: rebrand to Argus logo — new icons and blue theme from logo colors`
+- `feat: circular icon and logo brand mark across all surfaces`
+- `feat: replace logo with Argus2 across all icons and report page`
+
+---
+
 ### Root cause of the persistent drafts redirect
 
 Tabs opened before the extension is installed or reloaded never receive the manifest-declared content scripts. `chrome.tabs.sendMessage` fails silently on those tabs, causing the fallback to open the drafts page.
