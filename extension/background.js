@@ -261,6 +261,46 @@ async function ensureOffscreenDocument() {
   });
 }
 
+// Injects the overlay + content scripts into a tab if they aren't already
+// loaded (covers tabs opened before the extension was installed/reloaded).
+async function ensureScripts(targetTabId) {
+  await chrome.scripting.executeScript({
+    target: { tabId: targetTabId, allFrames: true },
+    files: ['overlay.js', 'content.js'],
+  });
+  await new Promise((r) => setTimeout(r, 100));
+}
+
+// During a desktop recording the user controls it from a floating in-page
+// pill instead of the (now minimized) recording-controls window. Show that
+// pill on the given tab so it follows the user as they switch tabs.
+async function showDesktopControlsOnTab(targetTabId, recordingTabId) {
+  const tab = await chrome.tabs.get(targetTabId).catch(() => null);
+  if (!tab || !/^https?:/.test(tab.url || '')) return;
+  await ensureScripts(targetTabId).catch(() => {});
+  chrome.tabs
+    .sendMessage(targetTabId, { type: 'SHOW_DESKTOP_RECORDING_CONTROLS', recordingTabId })
+    .catch(() => {});
+}
+
+function broadcastDesktopRecordingEnded() {
+  chrome.tabs.query({}).then((tabs) => {
+    for (const t of tabs) {
+      chrome.tabs.sendMessage(t.id, { type: 'DESKTOP_RECORDING_ENDED' }).catch(() => {});
+    }
+  });
+}
+
+// Keep the floating stop pill in front of the user as they change tabs.
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  for (const [recTabId, source] of activeRecordings) {
+    if (source === 'desktop') {
+      showDesktopControlsOnTab(tabId, recTabId);
+      break;
+    }
+  }
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   switch (msg.type) {
     case 'CONSOLE_LOG': {
@@ -345,6 +385,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const tabId = msg.tabId;
       activeRecordings.set(tabId, 'desktop');
       attachDebugger(tabId);
+      // The controls window minimizes itself; surface the floating stop pill
+      // on the page the user is reporting on.
+      showDesktopControlsOnTab(tabId, tabId);
+      return false;
+    }
+
+    case 'STOP_DESKTOP_RECORDING_REQUEST': {
+      // Relayed from the in-page pill to the recording-controls window, which
+      // filters by tabId and owns the MediaRecorder.
+      chrome.runtime.sendMessage({ type: 'STOP_DESKTOP_RECORDING', tabId: msg.tabId }).catch(() => {});
       return false;
     }
 
@@ -363,6 +413,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       recordingControlWindows.delete(tabId);
       chrome.runtime.sendMessage({ type: 'RECORDING_ERROR', tabId, error: msg.error }).catch(() => {});
       chrome.tabs.sendMessage(tabId, { type: 'RECORDING_ERROR', error: msg.error }).catch(() => {});
+      broadcastDesktopRecordingEnded();
       return false;
     }
 
@@ -389,15 +440,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
         setTimeout(() => detachDebugger(tabId), 1000);
         if (msg.source === 'desktop') {
-          // Injects content scripts into a tab if they aren't already loaded
-          // (covers tabs opened before the extension was installed/reloaded).
-          const ensureScripts = async (targetTabId) => {
-            await chrome.scripting.executeScript({
-              target: { tabId: targetTabId, allFrames: true },
-              files: ['overlay.js', 'content.js'],
-            });
-            await new Promise((r) => setTimeout(r, 100));
-          };
+          // Remove the floating stop pill from any tab it was shown on.
+          broadcastDesktopRecordingEnded();
 
           const sendReady = async (targetTabId, recordingTabId) => {
             await ensureScripts(targetTabId).catch(() => {});

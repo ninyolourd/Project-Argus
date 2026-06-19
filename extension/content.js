@@ -169,6 +169,24 @@
     stopWidget = window.ArgusOverlay.showStopButton(performStop);
   }
 
+  function removeStopWidget() {
+    if (stopWidget) {
+      stopWidget.remove();
+      stopWidget = null;
+    }
+  }
+
+  // Floating pill shown during a desktop recording. Clicking it asks the
+  // background to relay a stop to the recording-controls window that owns the
+  // MediaRecorder; the resulting recording arrives via DESKTOP_RECORDING_READY.
+  function showDesktopRecordingControls(recordingTabId) {
+    if (stopWidget) return;
+    stopWidget = window.ArgusOverlay.showStopButton(() => {
+      stopWidget.setProcessing();
+      chrome.runtime.sendMessage({ type: 'STOP_DESKTOP_RECORDING_REQUEST', tabId: recordingTabId });
+    });
+  }
+
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'GET_PAGE_INFO') {
       sendResponse(getPageInfo());
@@ -182,19 +200,27 @@
       if (isTopFrame) showRecordingControls();
       return false;
     }
+    if (msg.type === 'SHOW_DESKTOP_RECORDING_CONTROLS') {
+      if (isTopFrame) showDesktopRecordingControls(msg.recordingTabId ?? null);
+      return false;
+    }
+    if (msg.type === 'DESKTOP_RECORDING_ENDED') {
+      if (isTopFrame) removeStopWidget();
+      return false;
+    }
     if (msg.type === 'STOP_RECORDING_REQUEST') {
       if (isTopFrame) performStop();
       return false;
     }
     if (msg.type === 'DESKTOP_RECORDING_READY') {
-      if (isTopFrame) showDesktopRecordingPreview(msg.recordingTabId ?? null);
+      if (isTopFrame) {
+        removeStopWidget();
+        showDesktopRecordingPreview(msg.recordingTabId ?? null);
+      }
       return false;
     }
     if (msg.type === 'RECORDING_ERROR') {
-      if (isTopFrame && stopWidget) {
-        stopWidget.remove();
-        stopWidget = null;
-      }
+      if (isTopFrame) removeStopWidget();
       return false;
     }
     return false;

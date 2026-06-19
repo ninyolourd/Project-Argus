@@ -68,8 +68,8 @@ Recording stops but the "New Bug Capture" modal never shows. Workaround is to go
 ### Screenshot annotation
 Before the "New Bug Capture" modal confirms a save, users should be able to mark up the screenshot — add text labels, highlight areas, draw arrows. Freehand drawing is the minimum; shapes and text on top would be ideal.
 
-### Floating stop widget for desktop recording
-The recording-controls window currently opens as a separate Chrome window and can get lost behind other windows or buried in the taskbar. Replace it with a small floating overlay injected into the current page (similar to how Loom's stop button works) so users always know where to click to stop.
+### Floating stop widget for desktop recording — ✅ Done (2026-06-19)
+The recording-controls window previously stayed visible as a small bar and could get lost behind other windows or buried in the taskbar. It now minimizes itself once capture starts, and a floating "Stop Recording" pill (the same in-page widget tab recording uses) is injected into the current page. The pill follows the user across tab switches and relays a stop request to the minimized window that owns the MediaRecorder. Chrome's native "Stop sharing" bar remains as a fallback.
 
 ---
 

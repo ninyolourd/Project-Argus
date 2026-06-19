@@ -17,9 +17,11 @@ let discardRecording = false;
 
 actionBtn.onclick = startRecording;
 
-function shrinkWindow(win) {
+// Once capture is running the user controls it from the in-page floating
+// "Stop Recording" pill, so tuck this window out of the way.
+function minimizeWindow(win) {
   hint.style.display = 'none';
-  chrome.windows.update(win.id, { width: 360, height: 64 }).catch(() => {});
+  chrome.windows.update(win.id, { state: 'minimized' }).catch(() => {});
 }
 
 async function startRecording() {
@@ -33,7 +35,6 @@ async function startRecording() {
   try {
     stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
   } catch (err) {
-    shrinkWindow(win);
     if (err.name === 'NotAllowedError') {
       window.close();
       return;
@@ -45,7 +46,7 @@ async function startRecording() {
   activeStream = stream;
   chunks = [];
 
-  shrinkWindow(win);
+  minimizeWindow(win);
 
   stream.getVideoTracks()[0].addEventListener('ended', stopRecording);
 
@@ -118,7 +119,7 @@ function showError(message) {
   actionBtn.disabled = false;
   actionBtn.onclick = () => window.close();
   chrome.windows.getCurrent().then((win) => {
-    chrome.windows.update(win.id, { width: 420, height: 110 }).catch(() => {});
+    chrome.windows.update(win.id, { state: 'normal', focused: true, width: 420, height: 110 }).catch(() => {});
   });
 }
 

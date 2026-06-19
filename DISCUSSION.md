@@ -347,3 +347,29 @@ This reframing pushed the old Phase 1–4 down: Accounts is now Phase 2, Project
 - `docs: add AI-powered bug report generation as Phase 1; rename Olympus to Hephaestus; reframe Argus as mini app + extension`
 
 This covers all scenarios: user starts from a web page, switches tabs during recording, or starts from an extension page (library/drafts).
+
+---
+
+## Session — 2026-06-19 (Floating Stop Widget for Desktop Recording)
+
+### Problem
+
+Desktop recording ran `getDisplayMedia` + `MediaRecorder` inside a separate `recording-controls` popup window that shrank to a small bar after capture started. That bar could get lost behind other windows or buried in the taskbar, so users couldn't find the Stop button. (Tab recording already showed a clean in-page pill via `overlay.js`'s `showStopButton`.)
+
+### Fix
+
+Capture stays in the controls window (it needs the user gesture + a persistent context for the stream), but the UX moved into the page:
+
+- **`recording-controls.js`** — once capture starts the window minimizes itself (`minimizeWindow`) instead of shrinking to a bar; removed the now-dead `shrinkWindow`. On error it restores to a normal, focused window to show the message.
+- **`background.js`** —
+  - New helpers: `ensureScripts` (factored out of `RECORDING_DATA`), `showDesktopControlsOnTab`, `broadcastDesktopRecordingEnded`.
+  - `chrome.tabs.onActivated` listener re-shows the pill on whatever web tab the user switches to during an active desktop recording (the pill "follows" them).
+  - `RECORDING_STARTED` now surfaces the pill on the recording tab.
+  - New `STOP_DESKTOP_RECORDING_REQUEST` case relays `STOP_DESKTOP_RECORDING` to the minimized controls window (which already owned that handler).
+  - Broadcasts `DESKTOP_RECORDING_ENDED` to clear stale pills on `RECORDING_DATA` and `RECORDING_ERROR`.
+- **`content.js`** — `showDesktopRecordingControls` (reuses `showStopButton`), `removeStopWidget`, and handlers for `SHOW_DESKTOP_RECORDING_CONTROLS` / `DESKTOP_RECORDING_ENDED`; `DESKTOP_RECORDING_READY` now removes the pill before showing the preview.
+
+Chrome's native "Stop sharing" bar remains as an always-present fallback. `Argus-Extension.zip` rebuilt. Tested in Chrome.
+
+### Commits this session
+- (see git log)
