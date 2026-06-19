@@ -317,4 +317,33 @@ Tabs opened before the extension is installed or reloaded never receive the mani
 - `overlay.js`: `window.ArgusOverlay = window.ArgusOverlay || (() => { ... })()`
 - `content.js`: early return if `window.__argusContentLoaded` is already set
 
+---
+
+## Session — 2026-06-19 (Roadmap Update — AI Generation, Hephaestus Rename, Mini App Direction)
+
+### Platform rename: Olympus → Hephaestus
+
+The internal eCloudValley platform name was finalized as **Hephaestus** (previously referred to as Olympus throughout earlier planning). All references in `ROADMAP.md` updated. Argus and Athena remain app tiles within it, keeping the Greek mythology naming convention.
+
+### New Phase 1: AI-Powered Automated Bug Report Generation
+
+Added ahead of Accounts because it ships independently — no auth or project infrastructure required, and it improves every report immediately.
+
+- On submit, capture metadata + console/network logs sent to an AI API (e.g. Claude API)
+- Vision-capable model analyzes the screenshot (or first/last frames of a recording) to describe what's on screen
+- AI generates: title, structured description, inferred steps to reproduce, and a suggested severity (Low/Medium/High/Critical) based on error signals in the logs
+- Pre-fills report fields server-side; user can edit before saving or accept as-is
+
+### Architecture shift: Argus as a mini app, not just an extension
+
+Decision made to evolve Argus from a pure Chrome extension into a **mini app with extension capabilities**:
+- **Web app** (primary) — full Argus UI hosted on the server, login via Hephaestus SSO, manage all reports/projects without installing anything
+- **Chrome extension** (companion) — adds in-page capture capabilities; submits to the same backend
+- Both share the same reports, projects, and accounts
+
+This reframing pushed the old Phase 1–4 down: Accounts is now Phase 2, Projects & Folders is Phase 3, the renamed "Mini App & Hephaestus Integration" is Phase 4, and Collaboration & Workflow is Phase 5.
+
+### Commits this session
+- `docs: add AI-powered bug report generation as Phase 1; rename Olympus to Hephaestus; reframe Argus as mini app + extension`
+
 This covers all scenarios: user starts from a web page, switches tabs during recording, or starts from an extension page (library/drafts).
