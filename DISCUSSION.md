@@ -403,3 +403,15 @@ While testing, the popup threw `Could not establish connection. Receiving end do
 
 ### Commits this session
 - (see git log)
+
+---
+
+## Session — 2026-06-23 (ECV-Branded User Manual)
+
+Generated an ECV-branded **User Manual** for Argus via the `ecv-create-user-manual` skill (docx-js + `ecv-docx-brand` standards).
+
+- **Output:** `docs/User-Manual-eCloudValley.docx` — Calibri, ECV palette (`1D50A2`/`409AD6`/`F39800`), embedded ECV logo, running header, cover footer (Document ID `PRJ-ARGUS-001` / Version 1.0 / Date) and confidential footer, ToC field, sign-off block. Validated: valid OOXML, no Arial, no forbidden `#00B0F0`.
+- **Metadata:** User Manual · Argus · eCloudValley Technology (Philippines), Inc. · `PRJ-ARGUS-001` · v1.0 · Nino Barot, Developer · no sprint.
+- **Content** sourced from `ROADMAP.md` / `QA-GUIDE.md`: Introduction, Getting Started, System Overview, Features (screenshot capture incl. new annotation tools, tab/desktop recording with floating stop pill, log capture, report creation/sharing, library, drafts, comments, owner-only description), Troubleshooting, FAQs, Glossary, Sign-off.
+- **Standing decision:** keep this manual updated whenever a new Argus feature ships (bump version + add a Revision History row).
+- **Confidentiality:** Project-Argus repo is public, so `docs/*.docx` is gitignored — the confidential deliverable stays local. Only `.gitignore` + this log entry are committed.
