@@ -16,7 +16,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       box-shadow: 0 4px 16px rgba(20,20,30,0.14);
     }
     .selection-rect {
-      position: fixed; border: 2px dashed #0099ff;
+      position: fixed; border: 2px dashed #1f93d8;
       box-shadow: 0 0 0 9999px rgba(15, 16, 20, 0.45);
       pointer-events: none;
     }
@@ -33,7 +33,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
     .stop-widget:active { transform: translateY(1px); }
     .stop-widget.processing { cursor: default; opacity: 0.8; }
     .stop-dot {
-      width: 10px; height: 10px; border-radius: 50%; background: #dc2626;
+      width: 10px; height: 10px; border-radius: 50%; background: #df2b43;
       animation: argus-pulse 1.2s infinite; flex-shrink: 0;
     }
     @keyframes argus-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -48,7 +48,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       border-radius: 14px; padding: 18px; width: min(480px, 92vw);
       max-height: 88vh; overflow: auto; box-shadow: 0 12px 32px rgba(20,20,30,0.18);
     }
-    .modal-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #005fa3; }
+    .modal-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #0f5d8f; }
     .modal-preview img, .modal-preview video {
       width: 100%; border-radius: 10px; display: block; margin-bottom: 12px;
       background: #000;
@@ -61,7 +61,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
     }
     .modal-card textarea:focus,
     .modal-card input[type="text"]:focus {
-      outline: none; border-color: #0099ff; background: #ffffff;
+      outline: none; border-color: #1f93d8; background: #ffffff;
     }
     .modal-card input[type="text"] {
       min-height: 0; height: 36px;
@@ -77,14 +77,14 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       transition: background 0.15s ease, transform 0.05s ease;
     }
     .modal-actions button:active:not(:disabled) { transform: translateY(1px); }
-    .btn-primary { background: #0099ff; color: #ffffff; }
-    .btn-primary:hover:not(:disabled) { background: #007acc; }
+    .btn-primary { background: #1f93d8; color: #ffffff; }
+    .btn-primary:hover:not(:disabled) { background: #1576b3; }
     .btn-primary:disabled { background: #e6e6ef; color: #9a9aa8; cursor: not-allowed; }
     .btn-secondary { background: #f4f4f8; color: #16161d; border: 1px solid #e6e6ef; }
     .btn-secondary:hover:not(:disabled) { background: #e6e6ef; }
     .modal-status { font-size: 12px; margin-top: 8px; min-height: 16px; color: #6e6e7c; }
-    .modal-status.error { color: #dc2626; }
-    .modal-status.success { color: #007acc; }
+    .modal-status.error { color: #df2b43; }
+    .modal-status.success { color: #1576b3; }
 
     .annot-toolbar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 8px;
@@ -95,7 +95,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
     }
     .annot-tool:hover { background: #e6e6ef; }
-    .annot-tool.active { background: #0099ff; color: #ffffff; border-color: #0099ff; }
+    .annot-tool.active { background: #1f93d8; color: #ffffff; border-color: #1f93d8; }
     .annot-sep { width: 1px; height: 20px; background: #e6e6ef; margin: 0 3px; }
     .annot-color {
       width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
@@ -108,7 +108,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
       cursor: crosshair; touch-action: none;
     }
     .annot-text-input {
-      position: absolute; border: 1px dashed #0099ff; background: rgba(255,255,255,0.9);
+      position: absolute; border: 1px dashed #1f93d8; background: rgba(255,255,255,0.9);
       font-weight: 700; padding: 1px 3px; outline: none; resize: none; overflow: hidden;
       line-height: 1.2; white-space: pre; min-width: 28px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -236,7 +236,7 @@ window.ArgusOverlay = window.ArgusOverlay || (() => {
   // in a few colors, with undo/clear. Returns the element to mount plus a
   // toDataURL() that flattens the annotations onto the original image.
   function createImageAnnotator(src) {
-    const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#0099ff', '#16161d', '#ffffff'];
+    const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#1f93d8', '#16161d', '#ffffff'];
     const TOOLS = [
       { id: 'pen', label: '✏️', title: 'Pen' },
       { id: 'arrow', label: '↗', title: 'Arrow' },

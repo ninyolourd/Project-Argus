@@ -415,3 +415,17 @@ Generated an ECV-branded **User Manual** for Argus via the `ecv-create-user-manu
 - **Content** sourced from `ROADMAP.md` / `QA-GUIDE.md`: Introduction, Getting Started, System Overview, Features (screenshot capture incl. new annotation tools, tab/desktop recording with floating stop pill, log capture, report creation/sharing, library, drafts, comments, owner-only description), Troubleshooting, FAQs, Glossary, Sign-off.
 - **Standing decision:** keep this manual updated whenever a new Argus feature ships (bump version + add a Revision History row).
 - **Confidentiality:** Project-Argus repo is public, so `docs/*.docx` is gitignored — the confidential deliverable stays local. Only `.gitignore` + this log entry are committed.
+
+---
+
+## Session — 2026-06-30 (New Eye Logo + Theme Match)
+
+Rebranded to a new **Argus eye logo** (`argus logo.png`, 1024×1024) — a navy eye with circuit-trace iris and a red bug pupil.
+
+- **Icons:** regenerated `extension/icons/icon{16,48,128}.png` + `server/public/argus-logo.png` as circular PNGs using **4× supersampling** (crop the circle at high res, then a single bicubic downscale) for a crisp, smooth result instead of the earlier pixelated single-pass mask. Generated with `jimp` (no native deps).
+- **Theme matched to logo colors** across `extension/shared/theme.css`, `server/public/report.css`, and hardcoded hex in `extension/overlay.js`:
+  - primary `#0099ff → #1f93d8` (eye-outline blue), hover `#1576b3`, dark `#0f5d8f`
+  - accent `#00d4ff → #1cd4f5` (cyan eye-glow)
+  - danger `#dc2626 → #df2b43` (the red bug)
+  - new `--color-navy #07132b`; brand titles (`.brand h1`, `.brand-name`) now navy
+- Source `argus logo.png` gitignored (same pattern as `Argus2.jpg`); only processed PNGs committed. `Argus-Extension.zip` rebuilt.

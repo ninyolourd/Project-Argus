@@ -7,18 +7,20 @@
   --color-text-muted: #6e6e7c;
   --color-text-faint: #9a9aa8;
 
-  --color-primary: #0099ff;
-  --color-primary-hover: #007acc;
-  --color-primary-dark: #005fa3;
-  --color-primary-soft: #e6f4ff;
+  /* Brand palette derived from the Argus eye logo */
+  --color-navy: #07132b;
+  --color-primary: #1f93d8;
+  --color-primary-hover: #1576b3;
+  --color-primary-dark: #0f5d8f;
+  --color-primary-soft: #e4f3fb;
 
-  --color-accent: #00d4ff;
-  --color-accent-soft: #e0faff;
+  --color-accent: #1cd4f5;
+  --color-accent-soft: #e2fbff;
 
   --color-success: #16a34a;
   --color-success-soft: #ecfdf3;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fdecec;
+  --color-danger: #df2b43;
+  --color-danger-soft: #fdecef;
   --color-warning: #d97706;
 
   --radius-sm: 6px;
@@ -57,7 +59,7 @@
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.01em;
-  color: var(--color-text);
+  color: var(--color-navy);
 }
 
 /* Buttons */

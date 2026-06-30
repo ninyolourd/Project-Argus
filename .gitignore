@@ -7,6 +7,7 @@ server/data/
 # Source logo files (processed versions committed under extension/icons/ and server/public/)
 Argus_Logo.jpg
 Argus2.jpg
+argus logo.png
 
 # Confidential ECV-branded deliverables — kept local only (repo is public)
 docs/*.docx
