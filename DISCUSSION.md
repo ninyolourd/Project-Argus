@@ -429,3 +429,7 @@ Rebranded to a new **Argus eye logo** (`argus logo.png`, 1024×1024) — a navy 
   - danger `#dc2626 → #df2b43` (the red bug)
   - new `--color-navy #07132b`; brand titles (`.brand h1`, `.brand-name`) now navy
 - Source `argus logo.png` gitignored (same pattern as `Argus2.jpg`); only processed PNGs committed. `Argus-Extension.zip` rebuilt.
+
+### User Manual refreshed to v1.1
+
+Regenerated `docs/User-Manual-eCloudValley.docx` (kept local / gitignored) with the new branding: added the Argus eye logo as a circular product emblem on the cover (ECV corporate logo stays in the header per brand spec), bumped the version 1.0 → 1.1, and added a Revision History row. Content otherwise unchanged.
