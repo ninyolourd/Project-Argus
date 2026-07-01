@@ -449,3 +449,7 @@ Implemented the first roadmap phase: server-side AI generation of bug reports vi
 Recordings currently fall back to logs + metadata (no server-side frame extraction — would need ffmpeg). Verified: SDK 0.107 supports `output_config`/`json_schema`/`claude-opus-4-8`; no-key path returns null and saves cleanly. Live end-to-end run needs `ANTHROPIC_API_KEY` set in the Render environment.
 
 The key is **not** committed — it belongs only in Render's env vars (same pattern as the B2 credentials).
+
+### ffmpeg frame extraction for recordings
+
+Extended Phase 1 so screen recordings get vision analysis too (previously text-only). Added `server/src/video.js` (`extractVideoFrames`) using a bundled **`ffmpeg-static`** binary (no system dependency — installs with npm, works on Render). It writes the webm to a temp dir, decodes at 1 fps (`fps=1,scale='min(1280,iw)':-1`, 600-frame safety cap), and returns the **first and last** PNG frames — the recording's start and end state (MediaRecorder webm lacks a reliable seek index, so decode-and-take-ends is more robust than `-sseof`). `ai.js` attaches both frames to the Claude vision request for video captures; best-effort, falls back to logs + metadata if ffmpeg fails. Verified end-to-end locally: a 3s test webm produced valid first/last PNG frames.

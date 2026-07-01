@@ -11,6 +11,14 @@
 
 const AnthropicModule = require('@anthropic-ai/sdk');
 const Anthropic = AnthropicModule.default || AnthropicModule;
+const { extractVideoFrames } = require('./video');
+
+function imageBlock(buffer) {
+  return {
+    type: 'image',
+    source: { type: 'base64', media_type: 'image/png', data: buffer.toString('base64') },
+  };
+}
 
 const MODEL = 'claude-opus-4-8';
 const SEVERITIES = ['Low', 'Medium', 'High', 'Critical'];
@@ -55,13 +63,17 @@ function truncate(str, max) {
 }
 
 // Build a compact, token-bounded text summary of the captured context.
-function buildContextText({ captureType, metadata = {}, consoleLogs = [], networkLogs = [], notes }) {
+function buildContextText({ captureType, metadata = {}, consoleLogs = [], networkLogs = [], notes, hasFrames }) {
   const lines = [];
 
   lines.push('## Capture');
-  lines.push(captureType === 'video'
-    ? 'A screen recording was captured (frames not available — rely on the logs and metadata).'
-    : 'A screenshot was captured (see the attached image).');
+  if (captureType === 'video') {
+    lines.push(hasFrames
+      ? 'A screen recording was captured. The attached images are the first and last frames of the recording (its start and end state).'
+      : 'A screen recording was captured (frames not available — rely on the logs and metadata).');
+  } else {
+    lines.push('A screenshot was captured (see the attached image).');
+  }
 
   lines.push('\n## Page');
   if (metadata.url) lines.push(`URL: ${metadata.url}`);
@@ -120,15 +132,24 @@ async function generateBugReport({ captureType, captureBuffer, metadata, console
   });
 
   const content = [];
+  let hasFrames = false;
+
   if (captureType === 'image' && captureBuffer) {
-    content.push({
-      type: 'image',
-      source: { type: 'base64', media_type: 'image/png', data: captureBuffer.toString('base64') },
-    });
+    content.push(imageBlock(captureBuffer));
+  } else if (captureType === 'video' && captureBuffer) {
+    const { first, last } = await extractVideoFrames(captureBuffer);
+    if (first) {
+      content.push({ type: 'text', text: 'First frame of the recording:' }, imageBlock(first));
+      hasFrames = true;
+    }
+    if (last) {
+      content.push({ type: 'text', text: 'Last frame of the recording:' }, imageBlock(last));
+    }
   }
+
   content.push({
     type: 'text',
-    text: buildContextText({ captureType, metadata, consoleLogs, networkLogs, notes }),
+    text: buildContextText({ captureType, metadata, consoleLogs, networkLogs, notes, hasFrames }),
   });
 
   const response = await client.messages.create({
