@@ -49,6 +49,7 @@
   const networkFilter = { search: '', type: 'all', errorsOnly: false };
 
   renderCapture(report);
+  renderAiSummary(report.ai);
   renderMetadata(report.metadata || {});
   renderConsoleLogs(report.consoleLogs || []);
   renderNetworkLogs(report.networkLogs || []);
@@ -76,6 +77,35 @@
     } else {
       container.innerHTML = `<img src="${src}" alt="Screenshot" />`;
     }
+  }
+
+  function renderAiSummary(ai) {
+    if (!ai || !ai.title) return;
+    const section = document.getElementById('ai-summary');
+
+    document.getElementById('ai-title').textContent = ai.title;
+    document.getElementById('ai-description').textContent = ai.description || '';
+
+    const severity = ai.severity || 'Medium';
+    const badge = document.getElementById('ai-severity');
+    badge.textContent = severity;
+    badge.classList.add(`severity-${severity.toLowerCase()}`);
+
+    const stepsWrap = document.getElementById('ai-steps-wrap');
+    const steps = Array.isArray(ai.stepsToReproduce) ? ai.stepsToReproduce : [];
+    if (steps.length === 0) {
+      stepsWrap.style.display = 'none';
+    } else {
+      const list = document.getElementById('ai-steps');
+      list.innerHTML = '';
+      for (const step of steps) {
+        const li = document.createElement('li');
+        li.textContent = step;
+        list.appendChild(li);
+      }
+    }
+
+    section.classList.remove('hidden');
   }
 
   function renderMetadata(metadata) {

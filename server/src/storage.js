@@ -14,7 +14,7 @@ const BUCKET = process.env.B2_BUCKET;
 const captureKey = (id, ext) => `reports/${id}/capture.${ext}`;
 const metaKey = (id) => `reports/${id}/meta.json`;
 
-async function createReport(id, { captureType, captureBuffer, captureExt, metadata, consoleLogs, networkLogs, notes, name }) {
+async function createReport(id, { captureType, captureBuffer, captureExt, metadata, consoleLogs, networkLogs, notes, name, ai }) {
   await client.send(new PutObjectCommand({
     Bucket: BUCKET,
     Key: captureKey(id, captureExt),
@@ -31,6 +31,7 @@ async function createReport(id, { captureType, captureBuffer, captureExt, metada
     consoleLogs,
     networkLogs,
     notes,
+    ai: ai || null,
     comments: [],
     createdAt: new Date().toISOString(),
   };

@@ -28,6 +28,20 @@
             <div id="capture-container"></div>
           </section>
 
+          <section class="card ai-summary hidden" id="ai-summary">
+            <h2>AI Summary <span class="ai-badge">✨ Generated</span></h2>
+            <div class="ai-title-row">
+              <h3 id="ai-title"></h3>
+              <span id="ai-severity" class="severity-badge"></span>
+            </div>
+            <p id="ai-description" class="ai-description"></p>
+            <div id="ai-steps-wrap">
+              <h4>Steps to reproduce</h4>
+              <ol id="ai-steps" class="ai-steps"></ol>
+            </div>
+            <p class="ai-note muted">AI-generated from the capture and logs — review before relying on it.</p>
+          </section>
+
           <section class="card">
             <h2>Description</h2>
             <textarea id="description-input" class="text-field" placeholder="Add a description for this report…"></textarea>

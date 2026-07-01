@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createReport, getReportMeta, getCaptureStream, updateReportMeta, deleteReport } = require('../storage');
+const { generateBugReport } = require('../ai');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024, fieldSize: 50 * 1024 * 1024 } });
@@ -25,16 +26,37 @@ router.post('/reports', upload.single('capture'), async (req, res) => {
   const id = crypto.randomUUID();
   const captureExt = captureType === 'image' ? 'png' : 'webm';
 
+  const metadata = parseJson(req.body.metadata, {});
+  const consoleLogs = parseJson(req.body.consoleLogs, []);
+  const networkLogs = parseJson(req.body.networkLogs, []);
+
   try {
+    // Best-effort AI bug report generation (Phase 1). Never blocks the save:
+    // on any failure the report is stored without AI content.
+    let ai = null;
+    try {
+      ai = await generateBugReport({
+        captureType,
+        captureBuffer: req.file.buffer,
+        metadata,
+        consoleLogs,
+        networkLogs,
+        notes: notes || '',
+      });
+    } catch (err) {
+      console.error('generateBugReport failed:', err.message);
+    }
+
     const meta = await createReport(id, {
       captureType,
       captureBuffer: req.file.buffer,
       captureExt,
-      metadata: parseJson(req.body.metadata, {}),
-      consoleLogs: parseJson(req.body.consoleLogs, []),
-      networkLogs: parseJson(req.body.networkLogs, []),
+      metadata,
+      consoleLogs,
+      networkLogs,
       notes: notes || '',
       name: name || '',
+      ai,
     });
     res.json({ id: meta.id, url: `/report/${meta.id}` });
   } catch (err) {

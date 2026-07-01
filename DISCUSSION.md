@@ -433,3 +433,19 @@ Rebranded to a new **Argus eye logo** (`argus logo.png`, 1024×1024) — a navy 
 ### User Manual refreshed to v1.1
 
 Regenerated `docs/User-Manual-eCloudValley.docx` (kept local / gitignored) with the new branding: added the Argus eye logo as a circular product emblem on the cover (ECV corporate logo stays in the header per brand spec), bumped the version 1.0 → 1.1, and added a Revision History row. Content otherwise unchanged.
+
+---
+
+## Session — 2026-06-30 (Phase 1 — AI-Powered Bug Report Generation)
+
+Implemented the first roadmap phase: server-side AI generation of bug reports via the Claude API.
+
+- **`server/src/ai.js`** (`generateBugReport`) — sends the screenshot (vision) + page metadata + console/network logs to `claude-opus-4-8` using **structured outputs** (`output_config.format` json_schema) and returns `{ title, description, stepsToReproduce, severity, model, generatedAt }`. Console/network context is token-bounded (errors/failures prioritised, capped at 30 each). Severity is constrained to Low/Medium/High/Critical with explicit rubric. Installed `@anthropic-ai/sdk`.
+- **`server/src/routes/reports.js`** — on `POST /api/reports`, generates AI content before storing. Wrapped in try/catch and gated on `ANTHROPIC_API_KEY`: any failure or missing key stores the report **without** AI content — generation never blocks or fails a submission.
+- **`server/src/storage.js`** — `createReport` now persists `ai` into `meta.json`.
+- **Report page** (`public/report.html`, `report.js`, `report.css`) — new "AI Summary" card showing the generated title, a coloured severity badge, the description, and inferred steps to reproduce, with a "review before relying on it" note. Hidden when no `ai` is present.
+- **`.env.example`** — documented optional `ANTHROPIC_API_KEY`.
+
+Recordings currently fall back to logs + metadata (no server-side frame extraction — would need ffmpeg). Verified: SDK 0.107 supports `output_config`/`json_schema`/`claude-opus-4-8`; no-key path returns null and saves cleanly. Live end-to-end run needs `ANTHROPIC_API_KEY` set in the Render environment.
+
+The key is **not** committed — it belongs only in Render's env vars (same pattern as the B2 credentials).

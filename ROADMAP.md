@@ -73,9 +73,11 @@ The recording-controls window previously stayed visible as a small bar and could
 
 ---
 
-## Phase 1 — AI-Powered Automated Bug Report Generation
+## Phase 1 — AI-Powered Automated Bug Report Generation — 🚧 Implemented (2026-06-30)
 
 > Automatically generate a structured, readable bug report from the captured screenshot/recording and logs — no manual description needed.
+
+**Status:** Built server-side. On `POST /api/reports`, `server/src/ai.js` (`generateBugReport`) sends the screenshot (vision) + page metadata + console/network logs to the Claude API (`claude-opus-4-8`, structured outputs) and stores the result in `meta.ai` (`title`, `description`, `stepsToReproduce`, `severity`). The report page renders an "AI Summary" card with a severity badge. Best-effort: if `ANTHROPIC_API_KEY` is unset or the call fails, the report saves without AI content — generation never blocks a submission. Recordings currently fall back to logs + metadata (no server-side frame extraction yet). Needs a live key in the Render environment to verify end-to-end.
 
 ### What it does
 
